@@ -1,6 +1,6 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OxfordOnline.Models
 {
@@ -8,22 +8,31 @@ namespace OxfordOnline.Models
     public class Image
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int? Id { get; set; }
-
-        [Required]
-        [Column("path")]
-        public string Path { get; set; } = string.Empty;
-
-        [Column("sequence")]
-        public int? Sequence { get; set; }
+        public int Id { get; set; }
 
         [Required]
         [Column("product_id")]
-        [MaxLength(20)]
+        [StringLength(10)]
         public string ProductId { get; set; } = string.Empty;
 
-        // Navegação para Product
+        [Required]
+        [Column("image_path")]
+        [StringLength(500)]
+        public string ImagePath { get; set; } = string.Empty;
+
+        [Column("sequence")]
+        public int Sequence { get; set; } = 1;
+
+        [Column("image_main")]
+        public bool ImageMain { get; set; } = false;
+
+        [Required]
+        [Column("finalidade")]
+        public string Finalidade { get; set; } = "Web";
+
+        // Navegação
         [ForeignKey(nameof(ProductId))]
         public virtual Product? Product { get; set; }
     }

@@ -14,11 +14,13 @@ namespace OxfordOnline.Data
             _configuration = configuration;
         }
 
+        public DbSet<ApiUser> ApiUser { get; set; }
+
         public DbSet<Product> Product { get; set; }
 
         public DbSet<Image> Image { get; set; }
 
-        public DbSet<Tag> Tag { get; set; }
+        //public DbSet<Tag> Tag { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -30,7 +32,7 @@ namespace OxfordOnline.Data
                     ServerVersion.AutoDetect(connectionString)); // Detecta a versão do banco automaticamente
             }
         }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        /*protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
@@ -40,6 +42,6 @@ namespace OxfordOnline.Data
                 .WithMany()
                 .HasForeignKey(i => i.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
-        }
+        }*/
     }
 }

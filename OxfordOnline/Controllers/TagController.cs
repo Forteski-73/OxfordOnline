@@ -5,8 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace OxfordOnline.Controllers
 {
+    /*
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class TagController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -30,8 +31,8 @@ namespace OxfordOnline.Controllers
             // Verifica se todos os ProductIds existem
             var productIds = tags.Select(t => t.ProductId).Distinct();
             var existingProductIds = await _context.Product
-                .Where(p => productIds.Contains(p.ItemId))
-                .Select(p => p.ItemId)
+                .Where(p => productIds.Contains(p.ProductId))
+                .Select(p => p.ProductId)
                 .ToListAsync();
 
             var invalidProductIds = productIds.Except(existingProductIds).ToList();
@@ -109,5 +110,5 @@ namespace OxfordOnline.Controllers
 
             return Ok(tags);
         }
-    }
+    }*/
 }

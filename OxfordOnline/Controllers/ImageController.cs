@@ -1,139 +1,81 @@
-﻿using OxfordOnline.Data;
-using OxfordOnline.Models;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using OxfordOnline.Models;
+using OxfordOnline.Resources;
+using OxfordOnline.Services;
 
 namespace OxfordOnline.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("v{version:apiVersion}/[controller]")]
     public class ImageController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ImageService _imageService;
+        private readonly ILogger<ImageController> _logger;
 
-        public ImageController(AppDbContext context)
+        public ImageController(ImageService imageService, ILogger<ImageController> logger)
         {
-            _context = context;
+            _imageService = imageService;
+            _logger = logger;
         }
 
+        // POST: /Image
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateImages([FromBody] List<Image> images)
         {
             if (images == null || !images.Any())
-                return BadRequest("Nenhuma imagem foi enviada.");
+                return BadRequest(new { message = EndPointsMessages.NoImagesProvided });
 
-            // Validação: ProductId deve estar preenchido e Path não pode ser vazio
-            if (images.Any(img => string.IsNullOrWhiteSpace(img.ProductId) || string.IsNullOrWhiteSpace(img.Path)))
-                return BadRequest("Todas as imagens devem ter um ProductId válido e um caminho (Path).");
+            if (images.Any(i => string.IsNullOrWhiteSpace(i.ProductId) || string.IsNullOrWhiteSpace(i.ImagePath)))
+                return BadRequest(new { message = EndPointsMessages.InvalidImageField });
 
-            // Verifica se todos os ProductId existem
-            var productIds = images.Select(i => i.ProductId).Distinct().ToList();
-            var existingProductIds = await _context.Product
-                .Where(p => productIds.Contains(p.ItemId))
-                .Select(p => p.ItemId)
-                .ToListAsync();
-
-            var invalidProductIds = productIds.Except(existingProductIds).ToList();
-            if (invalidProductIds.Any())
-                return NotFound($"Produtos não encontrados: {string.Join(", ", invalidProductIds)}");
-
-            // Deleta todas as imagens existentes para os ProductIds enviados
-            var imagesToRemove = await _context.Image
-                .Where(img => productIds.Contains(img.ProductId))
-                .ToListAsync();
-
-            if (imagesToRemove.Any())
+            try
             {
-                _context.Image.RemoveRange(imagesToRemove);
-                await _context.SaveChangesAsync(); // Apaga antes de inserir
+                var result = await _imageService.CreateOrReplaceImagesAsync(images);
+                return Ok(new
+                {
+                    message = string.Format(EndPointsMessages.ImageSavedSuccess, result.Count()),
+                    imagens = result
+                });
             }
-
-            // Remove tracking da entidade Product
-            foreach (var img in images)
+            catch (ArgumentException ex)
             {
-                img.Product = null;
+                return NotFound(new { message = ex.Message });
             }
-
-            // Insere novas imagens
-            _context.Image.AddRange(images);
-            await _context.SaveChangesAsync();
-
-            return Ok(new
+            catch (Exception ex)
             {
-                message = $"{images.Count} imagem(ns) adicionada(s) com sucesso!",
-                imagens = images
-            });
+                _logger.LogError(ex, EndPointsMessages.LogErrorSavingImage);
+                return StatusCode(500, new
+                {
+                    message = EndPointsMessages.ErrorSavingImages,
+                    error = ex.InnerException?.Message ?? ex.Message
+                });
+            }
         }
 
-        /*
-        // POST: Criar múltiplas imagens
-        [HttpPost]
-        public async Task<IActionResult> CreateImages([FromBody] List<Image> images)
-        {
-            if (images == null || !images.Any())
-                return BadRequest("Nenhuma imagem foi enviada.");
-
-            // Validação: ProductId deve estar preenchido e Path não pode ser vazio
-            if (images.Any(img => string.IsNullOrWhiteSpace(img.ProductId) || string.IsNullOrWhiteSpace(img.Path)))
-                return BadRequest("Todas as imagens devem ter um ProductId válido e um caminho (Path).");
-
-            // Verifica se todos os ProductId existem
-            var productIds = images.Select(i => i.ProductId).Distinct();
-            var existingProductIds = await _context.Product
-                .Where(p => productIds.Contains(p.ItemId))
-                .Select(p => p.ItemId)
-                .ToListAsync();
-
-            var invalidProductIds = productIds.Except(existingProductIds).ToList();
-            if (invalidProductIds.Any())
-                return NotFound($"Produtos não encontrados: {string.Join(", ", invalidProductIds)}");
-
-            // Atualiza datas e remove referência ao objeto Product
-            foreach (var img in images)
-            {
-                img.Product = null;  // evitar tracking de entidades relacionadas neste ponto
-            }
-
-            _context.Image.AddRange(images);
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = $"{images.Count} imagem(ns) adicionada(s) com sucesso!",
-                imagens = images
-            });
-        }
-        */
-
-        // GET: Todas as imagens
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Image>>> GetAllImages()
-        {
-            var images = await _context.Image.ToListAsync();
-            return Ok(images);
-        }
-
-        // GET: Imagem por ID
+        // GET: /Image/{id}
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<Image>> GetImageById(int id)
         {
-            var image = await _context.Image.FindAsync(id);
+            var image = await _imageService.GetImageByIdAsync(id);
             if (image == null)
-                return NotFound("Imagem não encontrada.");
+                return NotFound(new { message = EndPointsMessages.ImageNotFound });
 
             return Ok(image);
         }
 
-        // GET: Imagens por ProductId
+        // GET: /Image/Product/{productId}
+        [Authorize]
         [HttpGet("Product/{productId}")]
         public async Task<ActionResult<IEnumerable<Image>>> GetImagesByProductId(string productId)
         {
-            var images = await _context.Image
-                .Where(i => i.ProductId == productId)
-                .ToListAsync();
-
-            if (images == null || images.Count == 0)
-                return NotFound("Nenhuma imagem encontrada para o produto informado.");
+            var images = await _imageService.GetImagesByProductIdAsync(productId);
+            if (!images.Any())
+                return NotFound(new { message = EndPointsMessages.ImageNotFoundForProduct });
 
             return Ok(images);
         }
