@@ -43,6 +43,22 @@
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ImageController",
+    "Method": "DownloadZipByProduct",
+    "RelativePath": "v1/Image/ImageProduct/{productId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ImageController",
     "Method": "GetImagesByProductId",
     "RelativePath": "v1/Image/Product/{productId}",
     "HttpMethod": "GET",
@@ -66,6 +82,27 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ImageController",
+    "Method": "ReplaceImages",
+    "RelativePath": "v1/Image/ReplaceProductImages/{productId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "files",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ProductController",

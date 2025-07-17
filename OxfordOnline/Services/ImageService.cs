@@ -6,8 +6,9 @@ namespace OxfordOnline.Services
 {
     public class ImageService
     {
-        private readonly IImageRepository _imageRepository;
+        private readonly IImageRepository   _imageRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IFtpService        _ftpService;
 
         public ImageService(IImageRepository imageRepository, IProductRepository productRepository)
         {
@@ -50,6 +51,31 @@ namespace OxfordOnline.Services
             await _imageRepository.SaveAsync();
 
             return images;
+        }
+
+        /*
+        public async Task DeleteImagesByProductIdAsync(string productId)
+        {
+            await _imageRepository.DeleteImagesByProductIdAsync(productId);
+        }
+
+        // NOVO: Salva uma nova imagem, envia para o FTP e grava no banco
+        public async Task SaveImageAsync(string productId, string fileName, Stream content)
+        {
+            await _imageRepository.SaveImageAsync(productId, fileName, content);
+        }
+        */
+
+        public async Task UpdateImagesByProductIdAsync(string productId, List<IFormFile> files)
+        {
+            await _imageRepository.UpdateImagesByProductIdAsync(productId, files);
+        }
+
+
+        // NOVO: Baixa imagem direto do FTP como stream
+        public async Task<Stream> DownloadImageStreamAsync(string ftpFilePath)
+        {
+            return await _imageRepository.DownloadFileStreamFromFtpAsync(ftpFilePath);
         }
     }
 }

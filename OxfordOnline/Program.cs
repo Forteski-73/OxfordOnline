@@ -92,6 +92,9 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<ImageService>();
 
+builder.Services.AddScoped<IFtpService, FtpService>();
+builder.Services.AddScoped<FtpService>();
+
 // === Produção ===
 if (builder.Environment.IsProduction())
 {

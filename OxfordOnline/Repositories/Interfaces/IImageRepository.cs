@@ -10,5 +10,10 @@ namespace OxfordOnline.Repositories.Interfaces
         Task AddRangeAsync(IEnumerable<Image> images);
         Task RemoveByProductIdsAsync(IEnumerable<string> productIds); // atualizado
         Task SaveAsync();
+
+        Task UpdateImagesByProductIdAsync(string productId, List<IFormFile> files);
+        //Task DeleteImagesByProductIdAsync(string productId);
+        //Task SaveImageAsync(string productId, string fileName, Stream content);
+        Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath);
     }
 }
