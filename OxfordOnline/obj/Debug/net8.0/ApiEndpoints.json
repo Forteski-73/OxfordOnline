@@ -43,8 +43,8 @@
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ImageController",
-    "Method": "DownloadZipByProduct",
-    "RelativePath": "v1/Image/ImageProduct/{productId}",
+    "Method": "GetImagesByProductId",
+    "RelativePath": "v1/Image/Product/{productId}/{finalidade}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -53,20 +53,9 @@
         "Name": "productId",
         "Type": "System.String",
         "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "OxfordOnline.Controllers.ImageController",
-    "Method": "GetImagesByProductId",
-    "RelativePath": "v1/Image/Product/{productId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
+      },
       {
-        "Name": "productId",
+        "Name": "finalidade",
         "Type": "System.String",
         "IsRequired": true
       }
@@ -82,6 +71,27 @@
         "StatusCode": 200
       }
     ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ImageController",
+    "Method": "DownloadZipByProduct",
+    "RelativePath": "v1/Image/ProductImage/{productId}/{finalidade}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "finalidade",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ImageController",

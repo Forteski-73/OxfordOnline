@@ -85,7 +85,7 @@
         }
       }
     },
-    "/v1/Image/Product/{productId}": {
+    "/v1/Image/Product/{productId}/{finalidade}": {
       "get": {
         "tags": [
           "Image"
@@ -97,6 +97,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "finalidade",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Finalidade"
             }
           }
         ],
@@ -133,7 +141,7 @@
         }
       }
     },
-    "/v1/Image/ImageProduct/{productId}": {
+    "/v1/Image/ProductImage/{productId}/{finalidade}": {
       "get": {
         "tags": [
           "Image"
@@ -145,6 +153,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "finalidade",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Finalidade"
             }
           }
         ],
@@ -456,6 +472,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "Finalidade": {
+        "enum": [
+          "DECORACAO",
+          "EMBALAGEM",
+          "PALETIZACAO",
+          "TODOS"
+        ],
+        "type": "string"
       },
       "Image": {
         "required": [

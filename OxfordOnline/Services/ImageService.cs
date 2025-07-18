@@ -1,4 +1,5 @@
 ﻿using OxfordOnline.Models;
+using OxfordOnline.Models.Enums;
 using OxfordOnline.Repositories;
 using OxfordOnline.Repositories.Interfaces;
 
@@ -21,9 +22,9 @@ namespace OxfordOnline.Services
             return await _imageRepository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Image>> GetImagesByProductIdAsync(string productId)
+        public async Task<IEnumerable<Image>> GetImagesByProductIdAsync(string productId, Finalidade finalidade)
         {
-            return await _imageRepository.GetByProductIdAsync(productId);
+            return await _imageRepository.GetByProductIdAsync(productId, finalidade);
         }
 
         public async Task<IEnumerable<Image>> CreateOrReplaceImagesAsync(List<Image> images)

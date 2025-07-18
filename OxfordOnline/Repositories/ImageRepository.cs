@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using OxfordOnline.Controllers;
 using OxfordOnline.Data;
 using OxfordOnline.Models;
+using OxfordOnline.Models.Enums;
 using OxfordOnline.Repositories.Interfaces;
 using OxfordOnline.Services;
 using System.Net;
@@ -27,10 +28,17 @@ namespace OxfordOnline.Repositories
             return await _context.Image.FindAsync(id);
         }
 
-        public async Task<IEnumerable<Image>> GetByProductIdAsync(string productId)
+        public async Task<IEnumerable<Image>> GetByProductIdAsync(string productId, Finalidade finalidade)
         {
-            return await _context.Image
-                .Where(i => i.ProductId == productId)
+            var query = _context.Image
+                .Where(i => i.ProductId == productId);
+
+            if (finalidade != Finalidade.TODOS)
+            {
+                query = query.Where(i => i.Finalidade == finalidade.ToString());
+            }
+
+            return await query
                 .OrderBy(i => i.Sequence)
                 .ToListAsync();
         }

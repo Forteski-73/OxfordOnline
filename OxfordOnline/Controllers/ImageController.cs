@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OxfordOnline.Models;
+using OxfordOnline.Models.Enums;
 using OxfordOnline.Resources;
 using OxfordOnline.Services;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Text.Json;
 
 namespace OxfordOnline.Controllers
 {
@@ -74,26 +76,26 @@ namespace OxfordOnline.Controllers
 
         // GET: /Image/Product/{productId}
         [Authorize]
-        [HttpGet("Product/{productId}")]
-        public async Task<ActionResult<IEnumerable<Image>>> GetImagesByProductId(string productId)
+        [HttpGet("Product/{productId}/{finalidade}")]
+        public async Task<ActionResult<IEnumerable<Image>>> GetImagesByProductId(string productId, Finalidade finalidade)
         {
-            var images = await _imageService.GetImagesByProductIdAsync(productId);
+            var images = await _imageService.GetImagesByProductIdAsync(productId, finalidade);
             if (!images.Any())
                 return NotFound(new { message = EndPointsMessages.ImageNotFoundForProduct });
 
             return Ok(images);
         }
 
-        [AllowAnonymous]
-        [HttpGet("ProductImage/{productId}")]
-        public async Task<IActionResult> DownloadZipByProduct(string productId)
+        [Authorize]
+        [HttpGet("ProductImage/{productId}/{finalidade}")]
+        public async Task<IActionResult> DownloadZipByProduct(string productId, Finalidade finalidade)
         {
             if (string.IsNullOrWhiteSpace(productId))
                 return BadRequest("Produto inválido.");
 
             try
             {
-                var images = await _imageService.GetImagesByProductIdAsync(productId);
+                var images = await _imageService.GetImagesByProductIdAsync(productId, finalidade);
 
                 if (images == null || !images.Any())
                     return NotFound("Nenhuma imagem encontrada para o produto.");
@@ -102,6 +104,7 @@ namespace OxfordOnline.Controllers
 
                 using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
                 {
+                    // APENAS ADICIONA AS IMAGENS
                     foreach (var img in images)
                     {
                         if (string.IsNullOrWhiteSpace(img.ImagePath))
@@ -109,6 +112,8 @@ namespace OxfordOnline.Controllers
 
                         var ftpRelativePath = img.ImagePath.TrimStart('/').Replace('\\', '/');
                         var fileName = Path.GetFileName(ftpRelativePath);
+
+                        _logger.LogWarning($"****** imagem {ftpRelativePath}  /  {fileName}");
 
                         try
                         {
