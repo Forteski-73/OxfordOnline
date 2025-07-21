@@ -746,6 +746,94 @@
         }
       }
     },
+    "/v1/Product/productData/{productId}": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductData"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductData"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/Product/productDataRange/{offsetId}": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "offsetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductData"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductData"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductData"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/TaxInformation": {
       "get": {
         "tags": [
@@ -1124,17 +1212,7 @@
       },
       "Oxford": {
         "required": [
-          "baseProductId",
-          "brandId",
-          "decorationId",
-          "familyId",
-          "lineId",
-          "processId",
-          "productGroupId",
-          "productId",
-          "qualityId",
-          "situationId",
-          "typeId"
+          "productId"
         ],
         "type": "object",
         "properties": {
@@ -1149,8 +1227,8 @@
           },
           "familyId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "familyDescription": {
             "maxLength": 255,
@@ -1159,8 +1237,8 @@
           },
           "brandId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "brandDescription": {
             "maxLength": 255,
@@ -1169,8 +1247,8 @@
           },
           "decorationId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "decorationDescription": {
             "maxLength": 255,
@@ -1179,8 +1257,8 @@
           },
           "typeId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "typeDescription": {
             "maxLength": 255,
@@ -1189,8 +1267,8 @@
           },
           "processId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "processDescription": {
             "maxLength": 255,
@@ -1199,8 +1277,8 @@
           },
           "situationId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "situationDescription": {
             "maxLength": 255,
@@ -1209,8 +1287,8 @@
           },
           "lineId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "lineDescription": {
             "maxLength": 255,
@@ -1219,8 +1297,8 @@
           },
           "qualityId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "qualityDescription": {
             "maxLength": 255,
@@ -1229,8 +1307,8 @@
           },
           "baseProductId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "baseProductDescription": {
             "maxLength": 255,
@@ -1239,8 +1317,8 @@
           },
           "productGroupId": {
             "maxLength": 50,
-            "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "productGroupDescription": {
             "maxLength": 255,
@@ -1277,6 +1355,24 @@
         },
         "additionalProperties": false
       },
+      "ProductData": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          },
+          "oxford": {
+            "$ref": "#/components/schemas/Oxford"
+          },
+          "invent": {
+            "$ref": "#/components/schemas/Invent"
+          },
+          "taxInformation": {
+            "$ref": "#/components/schemas/TaxInformation"
+          }
+        },
+        "additionalProperties": false
+      },
       "TaxInformation": {
         "required": [
           "productId"
@@ -1293,7 +1389,7 @@
             "type": "string"
           },
           "taxationOrigin": {
-            "maxLength": 50,
+            "maxLength": 255,
             "type": "string",
             "nullable": true
           },

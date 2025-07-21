@@ -48,7 +48,7 @@ namespace OxfordOnline.Models
         public string? UnitId { get; set; }
 
         // Opcional: relacionamento com a tabela Product
-        [ForeignKey("ProductId")]
-        public Product? Product { get; set; }
+        //[ForeignKey("ProductId")]
+        //public Product? Product { get; set; }
     }
 }

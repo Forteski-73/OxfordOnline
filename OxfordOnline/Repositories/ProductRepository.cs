@@ -25,6 +25,9 @@ namespace OxfordOnline.Repositories
                 .Where(p => products.Contains(p.ProductId))
                 .ToListAsync();
 
+        public async Task<Product?> GetFirstAsync() =>
+            await _context.Product.FirstOrDefaultAsync();
+
         public async Task AddAsync(Product product) =>
             await _context.Product.AddAsync(product);
 

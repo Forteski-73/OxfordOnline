@@ -1,15 +1,31 @@
-﻿using OxfordOnline.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using OxfordOnline.Models;
+using OxfordOnline.Models.Enums;
 using OxfordOnline.Repositories.Interfaces;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace OxfordOnline.Services
 {
     public class ProductService
     {
-        private readonly IProductRepository _repo;
+        private readonly IProductRepository         _repo;
+        private readonly IOxfordRepository          _oxfordRepo;
+        private readonly IInventRepository          _inventRepo;
+        private readonly ITaxInformationRepository  _taxRepo;
+        //private readonly IImageRepository           _imageRepo;
 
-        public ProductService(IProductRepository repo)
+        public ProductService(
+            IProductRepository          repo,
+            IOxfordRepository           oxfordRepo,
+            IInventRepository           inventRepo,
+            ITaxInformationRepository   taxRepo)
+            //IImageRepository            imageRepo
         {
-            _repo = repo;
+            _repo       = repo;
+            _oxfordRepo = oxfordRepo;
+            _inventRepo = inventRepo;
+            _taxRepo    = taxRepo;
+            //_imageRepo  = imageRepo;
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync() =>
@@ -53,6 +69,49 @@ namespace OxfordOnline.Services
             await _repo.DeleteAsync(product);
             await _repo.SaveAsync();
             return true;
+        }
+
+        public async Task<ProductData?> GetProductDataAsync(string productId)
+        {
+            var product = await _repo.GetByProductIdAsync(productId);
+            if (product == null) return null;
+
+            var oxford = await _oxfordRepo.GetByProductIdAsync(productId);
+            var invent = await _inventRepo.GetByProductIdAsync(productId);
+            var taxInfo = await _taxRepo.GetByProductIdAsync(productId);
+            //var images = await _imageRepo.GetByProductIdAsync(productId, Finalidade.TODOS);
+
+            return new ProductData
+            {
+                Product = product,
+                Oxford = oxford,
+                Invent = invent,
+                TaxInformation = taxInfo,
+            };
+        }
+        public async Task<ProductData?> GetProductDataRangeAsync(string Id)
+        {
+            var product = await _repo.GetByProductIdAsync(Id);
+            if (product == null) return null;
+
+            var oxford      = await _oxfordRepo.GetByProductIdAsync(product.ProductId);
+            var invent      = await _inventRepo.GetByProductIdAsync(product.ProductId);
+            var taxInfo     = await _taxRepo.GetByProductIdAsync(product.ProductId);
+            //var images    = await _imageRepo.GetByProductIdAsync(productId, Finalidade.TODOS);
+
+            return new ProductData
+            {
+                Product         = product,
+                Oxford          = oxford,
+                Invent          = invent,
+                TaxInformation  = taxInfo,
+            };
+        }
+
+        public async Task<Product?> GetFirstAsync()
+        {
+            var prod = await _repo.GetFirstAsync();
+            return prod;
         }
     }
 }

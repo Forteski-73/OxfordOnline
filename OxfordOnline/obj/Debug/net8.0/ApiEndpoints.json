@@ -417,6 +417,58 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetProductDetails",
+    "RelativePath": "v1/Product/productData/{productId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "OxfordOnline.Models.ProductData",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetProductDataRange",
+    "RelativePath": "v1/Product/productDataRange/{offsetId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "offsetId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[OxfordOnline.Models.ProductData, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "OxfordOnline.Controllers.TaxInformationController",
     "Method": "GetTaxInformations",
     "RelativePath": "v1/TaxInformation",

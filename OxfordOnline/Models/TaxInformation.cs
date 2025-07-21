@@ -17,7 +17,7 @@ namespace OxfordOnline.Models
 
         // Tributação
         [Column("taxation_origin")]
-        [MaxLength(50)]
+        [MaxLength(255)]
         public string? TaxationOrigin { get; set; }
 
         [Column("tax_fiscal_classification")]
@@ -46,8 +46,8 @@ namespace OxfordOnline.Models
         [Column("approx_tax_value_city", TypeName = "decimal(10,4)")]
         public decimal? ApproxTaxValueCity { get; set; }
 
-        // Relacionamento com Product
-        [ForeignKey("ProductId")]
-        public Product? Product { get; set; }
+        // Relacionamento com Product (Opcional)
+        //[ForeignKey("ProductId")]
+        //public Product? Product { get; set; }
     }
 }

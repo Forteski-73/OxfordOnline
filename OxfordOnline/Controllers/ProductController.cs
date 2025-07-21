@@ -116,5 +116,74 @@ namespace OxfordOnline.Controllers
                 });
             }
         }
+
+        // GET: /product/details/{productId}
+        [Authorize]
+        [HttpGet("productData/{productId}")]
+        public async Task<ActionResult<ProductData>> GetProductDetails(string productId)
+        {
+            var details = await _productService.GetProductDataAsync(productId);
+            if (details == null)
+                return NotFound(new { message = EndPointsMessages.ProductNotFound });
+
+            return Ok(details);
+        }
+
+        // GET: /product/productDataRange/{id}
+        [Authorize]
+        [HttpGet("productDataRange/{offsetId}")]
+        public async Task<ActionResult<List<ProductData>>> GetProductDataRange(int offsetId)
+        {
+            var resultList = new List<ProductData>();
+
+            if(offsetId == 0)
+            {
+                var product = await _productService.GetFirstAsync();
+                if (product != null && int.TryParse(product.ProductId, out int parsedId))
+                {
+                    offsetId = parsedId;
+                }
+            }
+
+            for (int i = offsetId; i < offsetId + 1000; i++)
+            {
+                var id = i.ToString("D6"); // Formata o ID para 6 dígitos
+                var details = await _productService.GetProductDataRangeAsync(id);
+                if (details != null)
+                {
+                    resultList.Add(details);
+                }
+            }
+
+            if (!resultList.Any())
+                return NotFound(new { message = "Nenhum produto encontrado no intervalo solicitado." });
+
+            return Ok(resultList);
+        }
+
+        // POST: /product/productDataByIds
+        [Authorize]
+        [HttpPost("productsData")]
+        public async Task<ActionResult<List<ProductData>>> GetProductDataByIds([FromBody] List<string> productIds)
+        {
+            if (productIds == null || !productIds.Any())
+                return BadRequest(new { message = "A lista de productIds está vazia ou nula." });
+
+            var result = new List<ProductData>();
+
+            foreach (var productId in productIds)
+            {
+                var data = await _productService.GetProductDataAsync(productId);
+                if (data != null)
+                {
+                    result.Add(data);
+                }
+            }
+
+            if (!result.Any())
+                return NotFound(new { message = "Nenhum dado encontrado para os productIds informados." });
+
+            return Ok(result);
+        }
     }
 }
