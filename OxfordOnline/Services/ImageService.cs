@@ -67,9 +67,9 @@ namespace OxfordOnline.Services
         }
         */
 
-        public async Task UpdateImagesByProductIdAsync(string productId, List<IFormFile> files)
+        public async Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files)
         {
-            await _imageRepository.UpdateImagesByProductIdAsync(productId, files);
+            await _imageRepository.UpdateImagesByProductIdAsync(productId, finalidade, files);
         }
 
 

@@ -12,7 +12,7 @@ namespace OxfordOnline.Repositories.Interfaces
         Task RemoveByProductIdsAsync(IEnumerable<string> productIds); // atualizado
         Task SaveAsync();
 
-        Task UpdateImagesByProductIdAsync(string productId, List<IFormFile> files);
+        Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files);
         //Task DeleteImagesByProductIdAsync(string productId);
         //Task SaveImageAsync(string productId, string fileName, Stream content);
         Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath);

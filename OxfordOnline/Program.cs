@@ -95,6 +95,15 @@ builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<IFtpService, FtpService>();
 builder.Services.AddScoped<FtpService>();
 
+builder.Services.AddScoped<IInventRepository, InventRepository>();
+builder.Services.AddScoped<InventService>();
+
+builder.Services.AddScoped<IOxfordRepository, OxfordRepository>();
+builder.Services.AddScoped<OxfordService>();
+
+builder.Services.AddScoped<ITaxInformationRepository, TaxInformationRepository>();
+builder.Services.AddScoped<TaxInformationService>();
+
 // === Produção ===
 if (builder.Environment.IsProduction())
 {

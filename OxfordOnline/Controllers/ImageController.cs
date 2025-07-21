@@ -141,8 +141,8 @@ namespace OxfordOnline.Controllers
             }
         }
 
-        [HttpPost("ReplaceProductImages/{productId}")]
-        public async Task<IActionResult> ReplaceImages(string productId, [FromForm] List<IFormFile> files)
+        [HttpPost("ReplaceProductImages/{productId}/{finalidade}")]
+        public async Task<IActionResult> ReplaceImages(string productId, Finalidade finalidade, [FromForm] List<IFormFile> files)
         {
             _logger.LogError("*** INICIO 0 ***");
             if (string.IsNullOrWhiteSpace(productId))
@@ -160,7 +160,7 @@ namespace OxfordOnline.Controllers
                 _logger.LogError("*** SALVA IMAGENS INICIO ***");
                 */
 
-                await _imageService.UpdateImagesByProductIdAsync(productId, files);
+                await _imageService.UpdateImagesByProductIdAsync(productId, finalidade,files);
 
 
                 // 2. Envia as novas imagens para o FTP

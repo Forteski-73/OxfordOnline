@@ -171,7 +171,7 @@
         }
       }
     },
-    "/v1/Image/ReplaceProductImages/{productId}": {
+    "/v1/Image/ReplaceProductImages/{productId}/{finalidade}": {
       "post": {
         "tags": [
           "Image"
@@ -183,6 +183,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "finalidade",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Finalidade"
             }
           }
         ],
@@ -209,6 +217,354 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/Invent": {
+      "get": {
+        "tags": [
+          "Invent"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invent"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invent"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Invent"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Invent"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Invent"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Invent"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/Invent/{productId}": {
+      "get": {
+        "tags": [
+          "Invent"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invent"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invent"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invent"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Invent"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invent"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invent"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Invent"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/Oxford": {
+      "get": {
+        "tags": [
+          "Oxford"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Oxford"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Oxford"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Oxford"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Oxford"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Oxford"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Oxford"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Oxford"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/Oxford/{productId}": {
+      "get": {
+        "tags": [
+          "Oxford"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Oxford"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Oxford"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Oxford"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Oxford"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Oxford"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Oxford"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Oxford"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Oxford"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -390,6 +746,180 @@
         }
       }
     },
+    "/v1/TaxInformation": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxInformation"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxInformation"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxInformation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TaxInformation"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TaxInformation"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TaxInformation"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/TaxInformation/{productId}": {
+      "get": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxInformation"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxInformation"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxInformation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxInformation"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxInformation"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxInformation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "TaxInformation"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/User/register": {
       "post": {
         "tags": [
@@ -521,6 +1051,208 @@
         },
         "additionalProperties": false
       },
+      "Invent": {
+        "required": [
+          "productId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "productId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "netWeight": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "taraWeight": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "grossWeight": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "grossDepth": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "grossWidth": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "grossHeight": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "unitVolume": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "unitVolumeML": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "nrOfItems": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "unitId": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Oxford": {
+        "required": [
+          "baseProductId",
+          "brandId",
+          "decorationId",
+          "familyId",
+          "lineId",
+          "processId",
+          "productGroupId",
+          "productId",
+          "qualityId",
+          "situationId",
+          "typeId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "productId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "familyId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "familyDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "brandId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "brandDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "decorationId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "decorationDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "typeId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "typeDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "processId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "processDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "situationId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "situationDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "lineId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lineDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "qualityId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "qualityDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "baseProductId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "baseProductDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "productGroupId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "productGroupDescription": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          }
+        },
+        "additionalProperties": false
+      },
       "Product": {
         "required": [
           "productId"
@@ -541,6 +1273,67 @@
             "maxLength": 20,
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TaxInformation": {
+        "required": [
+          "productId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "productId": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "taxationOrigin": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "taxFiscalClassification": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "productType": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "cestCode": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "fiscalGroupId": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "approxTaxValueFederal": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "approxTaxValueState": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "approxTaxValueCity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
           }
         },
         "additionalProperties": false

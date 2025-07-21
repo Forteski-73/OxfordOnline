@@ -70,12 +70,12 @@ namespace OxfordOnline.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateImagesByProductIdAsync(string productId, List<IFormFile> files)
+        public async Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files)
         {
             _logger.LogError("**** INICIO  UpdateImagesByProductIdAsync ****");
             try
             {
-                var images = await _context.Image.Where(i => i.ProductId == productId).ToListAsync();
+                var images = await _context.Image.Where(i => i.ProductId == productId && i.Finalidade == finalidade.ToString()).ToListAsync();
 
                 var firstImage = images.FirstOrDefault();
                 if (firstImage != null)
@@ -106,6 +106,7 @@ namespace OxfordOnline.Repositories
                         {
                             ProductId = productId,
                             ImagePath = ftpPath,
+                            Finalidade = finalidade.ToString(),
                             //UploadedAt = DateTime.UtcNow
                         };
                         _context.Image.Add(imageNew); // adiciona a nova imagem ao contexto

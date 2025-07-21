@@ -20,6 +20,12 @@ namespace OxfordOnline.Data
 
         public DbSet<Image> Image { get; set; }
 
+        public DbSet<Invent> Invent { get; set; }
+
+        public DbSet<Oxford> Oxford { get; set; }
+
+        public DbSet<TaxInformation> TaxInformation { get; set; }
+
         //public DbSet<Tag> Tag { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

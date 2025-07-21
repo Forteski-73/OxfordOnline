@@ -161,3 +161,10 @@ C:\OxfordOnline\OxfordOnline\OxfordOnline\obj\Debug\net8.0\OxfordOnline.pdb
 C:\OxfordOnline\OxfordOnline\OxfordOnline\obj\Debug\net8.0\OxfordOnline.genruntimeconfig.cache
 C:\OxfordOnline\OxfordOnline\OxfordOnline\obj\Debug\net8.0\ref\OxfordOnline.dll
 C:\OxfordOnline\OxfordOnline\OxfordOnline\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\output.config
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\web.config
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\appsettings.Development.json
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\appsettings.json
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\global.json
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\OxfordOnline.deps.json
+C:\OxfordOnline\OxfordOnline\OxfordOnline\bin\Debug\net8.0\publish\publish\OxfordOnline.runtimeconfig.json
