@@ -22,6 +22,8 @@ namespace OxfordOnline.Data
 
         public DbSet<Invent> Invent { get; set; }
 
+        public DbSet<InventDim> InventDim { get; set; }
+
         public DbSet<Oxford> Oxford { get; set; }
 
         public DbSet<TaxInformation> TaxInformation { get; set; }

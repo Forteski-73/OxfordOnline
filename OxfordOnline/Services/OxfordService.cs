@@ -1,4 +1,5 @@
-﻿using OxfordOnline.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using OxfordOnline.Models;
 using OxfordOnline.Repositories.Interfaces;
 
 namespace OxfordOnline.Services
@@ -73,6 +74,11 @@ namespace OxfordOnline.Services
             await _oxford.DeleteAsync(oxford);
             await _oxford.SaveAsync();
             return true;
+        }
+
+        public async Task<List<ProductData>> GetFilterOxfordByFields(OxfordFilterRequest filterRequest)
+        {
+            return await _oxford.FilterOxfordByFields(filterRequest);
         }
     }
 }

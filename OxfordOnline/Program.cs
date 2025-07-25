@@ -104,6 +104,12 @@ builder.Services.AddScoped<OxfordService>();
 builder.Services.AddScoped<ITaxInformationRepository, TaxInformationRepository>();
 builder.Services.AddScoped<TaxInformationService>();
 
+builder.Services.AddScoped<IFtpServiceOxServer, FtpServiceOxServer>();
+builder.Services.AddScoped<FtpServiceOxServer>();
+
+builder.Services.AddScoped<IInventDimRepository, InventDimRepository>();
+builder.Services.AddScoped<InventDimRepository>();
+
 // === Produção ===
 if (builder.Environment.IsProduction())
 {

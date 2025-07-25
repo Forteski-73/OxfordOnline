@@ -100,7 +100,7 @@ namespace OxfordOnline.Controllers
                 if (images == null || !images.Any())
                     return NotFound("Nenhuma imagem encontrada para o produto.");
 
-                var zipStream = new MemoryStream(); // NÃO usar 'using' aqui!
+                var zipStream = new MemoryStream(); // NÃO usar 'using' aqui
 
                 using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
                 {
@@ -113,8 +113,6 @@ namespace OxfordOnline.Controllers
                         var ftpRelativePath = img.ImagePath.TrimStart('/').Replace('\\', '/');
                         var fileName = Path.GetFileName(ftpRelativePath);
 
-                        _logger.LogWarning($"****** imagem {ftpRelativePath}  /  {fileName}");
-
                         try
                         {
                             var stream = await _imageService.DownloadImageStreamAsync(ftpRelativePath);
@@ -125,7 +123,7 @@ namespace OxfordOnline.Controllers
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, $"Erro ao adicionar imagem {fileName} no zip");
+                            _logger.LogWarning(ex, $"*** Erro ao adicionar imagem {fileName} no zip ***");
                         }
                     }
                 }
@@ -136,7 +134,7 @@ namespace OxfordOnline.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao gerar zip de imagens do produto");
+                _logger.LogError(ex, "*** Erro ao gerar zip de imagens do produto ***");
                 return StatusCode(500, "Erro interno ao gerar imagens do produto.");
             }
         }
@@ -144,34 +142,15 @@ namespace OxfordOnline.Controllers
         [HttpPost("ReplaceProductImages/{productId}/{finalidade}")]
         public async Task<IActionResult> ReplaceImages(string productId, Finalidade finalidade, [FromForm] List<IFormFile> files)
         {
-            _logger.LogError("*** INICIO 0 ***");
             if (string.IsNullOrWhiteSpace(productId))
                 return BadRequest("Produto inválido.");
 
             if (files == null || !files.Any())
                 return BadRequest("Nenhuma imagem enviada.");
 
-            _logger.LogError("*** INICIO 1 ***");
             try
             {
-                /*_logger.LogError("*** DELETE IMAGENS ***");
-                // 1. Exclui todas as imagens existentes
-                await _imageService.DeleteImagesByProductIdAsync(productId);
-                _logger.LogError("*** SALVA IMAGENS INICIO ***");
-                */
-
                 await _imageService.UpdateImagesByProductIdAsync(productId, finalidade,files);
-
-
-                // 2. Envia as novas imagens para o FTP
-                /*foreach (var file in files)
-                {
-                    if (file.Length == 0) continue;
-                    
-                    using var stream = file.OpenReadStream();
-                    await _imageService.SaveImageAsync(productId, file.FileName, stream);
-                }
-                _logger.LogError("*** SALVA IMAGENS FIM ***");*/
 
                 return Ok("Imagens substituídas com sucesso.");
             }

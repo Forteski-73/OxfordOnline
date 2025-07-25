@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OxfordOnline.Models;
-using OxfordOnline.Services;
+using OxfordOnline.Repositories.Interfaces;
 using OxfordOnline.Resources;
+using OxfordOnline.Services;
 
 namespace OxfordOnline.Controllers
 {
@@ -13,10 +14,12 @@ namespace OxfordOnline.Controllers
     {
         private readonly ProductService _productService;
         private readonly ILogger<ProductController> _logger;
+        private readonly FtpServiceOxServer _ftpServiceOxServer;
 
-        public ProductController(ProductService productService, ILogger<ProductController> logger)
+        public ProductController(ProductService productService, FtpServiceOxServer ftpServiceOxServer, ILogger<ProductController> logger)
         {
             _productService = productService;
+            _ftpServiceOxServer = ftpServiceOxServer;
             _logger = logger;
         }
 
@@ -185,5 +188,23 @@ namespace OxfordOnline.Controllers
 
             return Ok(result);
         }
+
+        // POST: /product/sync
+        [Authorize]
+        [HttpPost("sync")]
+        public async Task<ActionResult<List<ProductData>>> PostSyncImagesProduct([FromBody] List<string> products)
+        {
+            if (products.Any())
+            {
+                var result = products;
+            }
+            else
+            {
+                await _ftpServiceOxServer.SyncImagesAsync();
+            }
+
+            return Ok("Ok");
+        }
+
     }
 }

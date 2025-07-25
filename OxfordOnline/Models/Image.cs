@@ -10,6 +10,7 @@ namespace OxfordOnline.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
+        [JsonIgnore]
         public int Id { get; set; }
 
         [Required]

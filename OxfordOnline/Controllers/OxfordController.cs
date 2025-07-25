@@ -116,5 +116,20 @@ namespace OxfordOnline.Controllers
                 });
             }
         }
+        // POST: /Oxford/Products
+        [Authorize]
+        [HttpPost("Products")]
+        public async Task<ActionResult<List<ProductData>>> PostFilterOxfordByFields([FromBody] OxfordFilterRequest filter)
+        {
+            if (filter == null)
+                return BadRequest(new { message = "Filtro inválido." });
+
+            var result = await _oxfordService.GetFilterOxfordByFields(filter);
+
+            if (result == null)
+                return NotFound(new { message = "Nenhum produto encontrado com os filtros fornecidos." });
+
+            return Ok(result);
+        }
     }
 }

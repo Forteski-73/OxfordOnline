@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OxfordOnline.Models
 {
@@ -9,6 +10,7 @@ namespace OxfordOnline.Models
     {
         [Key]
         [Column("id")]
+        [JsonIgnore]
         public int Id { get; set; }
 
         [Required]

@@ -6,6 +6,7 @@ using OxfordOnline.Models;
 using OxfordOnline.Models.Enums;
 using OxfordOnline.Repositories.Interfaces;
 using OxfordOnline.Services;
+using OxfordOnline.Utils;
 using System.Net;
 
 namespace OxfordOnline.Repositories
@@ -78,9 +79,43 @@ namespace OxfordOnline.Repositories
                 var images = await _context.Image.Where(i => i.ProductId == productId && i.Finalidade == finalidade.ToString()).ToListAsync();
 
                 var firstImage = images.FirstOrDefault();
+
+                if (firstImage == null)
+                {
+                    var oxford = await _context.Oxford.FirstOrDefaultAsync(o => o.ProductId == productId);
+                    //family_description, brand_description, line_description, decoration_description
+                    if (oxford == null)
+                    {
+                        _logger.LogError($"**** Produto não encontrado: {productId} ****");
+                        throw new KeyNotFoundException($"Produto não encontrado: {productId}");
+                    }
+
+                    var pathBuilder = new FtpImagePathBuilder(
+                        oxford.FamilyDescription.      Replace(" ", "_"),
+                        oxford.BrandDescription.       Replace(" ", "_"),
+                        oxford.LineDescription.        Replace(" ", "_"),
+                        oxford.DecorationDescription.  Replace(" ", "_"),
+                        oxford.ProductId,
+                        finalidade.ToString()
+                    );
+
+                    var imagePath = $"{ pathBuilder.ToString() }/";
+
+                    _logger.LogError($"**************** Verificando diretório no FTP: {imagePath} ****************");
+
+                    await _ftpService.EnsureDirectoryExistsAsync(pathBuilder);
+
+                    firstImage = new Image 
+                    {
+                        ProductId = productId,
+                        ImagePath = imagePath,
+                        Finalidade = finalidade.ToString(),
+                    };
+                }
+
                 if (firstImage != null)
                 {
-                    _logger.LogError("**** INICIO  FTP ****");
+                    _logger.LogError("************************** INICIO  FTP **************************");
                     foreach (var image in images)
                     {
                         if (!string.IsNullOrEmpty(image.ImagePath))
@@ -92,7 +127,6 @@ namespace OxfordOnline.Repositories
 
                     foreach (var file in files)
                     {
-                        _logger.LogError("**** INICIO  IMAGENS ****");
                         if (file.Length == 0) continue;
 
                         using var stream = file.OpenReadStream();
@@ -102,12 +136,13 @@ namespace OxfordOnline.Repositories
 
                         await _ftpService.UploadAsync(ftpPath, stream);
 
+                        _logger.LogError($"***************************************** Diretório no FTP: {ftpPath} *****************************************");
+
                         var imageNew = new Image
                         {
                             ProductId = productId,
                             ImagePath = ftpPath,
                             Finalidade = finalidade.ToString(),
-                            //UploadedAt = DateTime.UtcNow
                         };
                         _context.Image.Add(imageNew); // adiciona a nova imagem ao contexto
                     }
@@ -131,65 +166,9 @@ namespace OxfordOnline.Repositories
             }
         }
 
-        /*
-        public async Task DeleteImagesByProductIdAsync(string productId)
-        {
-            var images = await _context.Image.Where(i => i.ProductId == productId).ToListAsync();
-
-            foreach (var image in images)
-            {
-                if (!string.IsNullOrEmpty(image.ImagePath))
-                {
-                    await _ftpService.DeleteAsync(image.ImagePath);
-                }
-                //_context.Image.Remove(image);  voltar para remover do banco de dados
-            }
-
-            //await _context.SaveChangesAsync(); voltar para remover do banco de dados
-        }
-        */
-
-        /*
-        public async Task SaveImageAsync(Image image, string productId, string pathFtp, string fileName, Stream content)
-        {
-            // Gera o caminho completo combinando o diretório recebido + guid + filename
-            var ftpPath = $"{pathFtp.TrimEnd('/')}/{fileName}";
-            await _ftpService.UploadAsync(ftpPath, content);
-
-            var image = new Image
-            {
-                ProductId = productId,
-                ImagePath = ftpPath,
-                //UploadedAt = DateTime.UtcNow
-            };
-
-            _context.Image.Add(image);
-            await _context.SaveChangesAsync();
-        }
-        */
-
         public async Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath)
         {
             return await _ftpService.DownloadAsync(ftpFilePath);
         }
-
-        /* public async Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath)
-         {
-             var ftpHost = "ftp.oxfordtec.com.br";
-             var ftpUser = "u700242432.oxfordftp";
-             var ftpPass = "OxforEstrutur@25";
-
-             var ftpUri = new Uri($"ftp://{ftpHost}/{ftpFilePath}");
-             var request = (FtpWebRequest)WebRequest.Create(ftpUri);
-             request.Method = WebRequestMethods.Ftp.DownloadFile;
-             request.Credentials = new NetworkCredential(ftpUser, ftpPass);
-             request.UseBinary = true;
-             request.UsePassive = true;
-             request.KeepAlive = false;
-
-             var response = (FtpWebResponse)await request.GetResponseAsync();
-             // Retorna o stream da resposta para leitura externa
-             return response.GetResponseStream();
-         }*/
     }
 }
