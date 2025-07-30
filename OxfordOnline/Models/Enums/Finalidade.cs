@@ -2,7 +2,7 @@
 {
     public enum Finalidade
     {
-        DECORACAO,
+        PRODUTO,
         EMBALAGEM,
         PALETIZACAO,
         TODOS

@@ -69,60 +69,78 @@ namespace OxfordOnline.Services
                     {
                         var fullPath = $"{uriPath}{line}";
                         var nomeProduto = Path.GetFileNameWithoutExtension(line);
+                        var extensao = Path.GetExtension(line);
                         _logger.LogInformation("*{nomeProduto}******** Arquivo lido: {Line} | Caminho completo: {FullPath}", nomeProduto, line, fullPath);
 
                         nomeProduto = nomeProduto.TrimStart('P', 'p');
-                        var oxford = await _oxfordService.GetOxfordByProductIdAsync(nomeProduto);
 
-                        if (oxford != null)
+
+                        // verifica se existe a imagem no banco
+                        var imagensExists = await _imageRepository.GetByProductAsync(nomeProduto, Finalidade.PRODUTO);
+
+                        if (imagensExists != null && imagensExists.Any())
                         {
-                            if (!string.IsNullOrWhiteSpace(oxford.FamilyDescription) &&
-                                !string.IsNullOrWhiteSpace(oxford.BrandDescription) &&
-                                !string.IsNullOrWhiteSpace(oxford.LineDescription) &&
-                                !string.IsNullOrWhiteSpace(oxford.DecorationDescription) &&
-                                !string.IsNullOrWhiteSpace(oxford.ProductId))
+                            // Já existem imagens para o produto e finalidade informados
+                            //_logger.LogInformation("EXISTE****{nomeProduto}********", nomeProduto);
+                        }
+                        else
+                        {
+                            // Não existem imagens 
+                            //_logger.LogInformation("NÃO EXISTE****{nomeProduto}********", nomeProduto);
+                            var oxford = await _oxfordService.GetOxfordByProductIdAsync(nomeProduto);
+
+                            if (oxford != null)
                             {
-                                var pathBuilder = new FtpImagePathBuilder(
-                                    oxford.FamilyDescription.Replace(" ", "_"),
-                                    oxford.BrandDescription.Replace(" ", "_"),
-                                    oxford.LineDescription.Replace(" ", "_"),
-                                    oxford.DecorationDescription.Replace(" ", "_"),
-                                    oxford.ProductId,
-                                    Finalidade.DECORACAO.ToString());
-
-                                var sourceUri = new Uri($"ftp://{_ftpHost}/imagens/{line}");
-
-                                // Baixa imagem do FTP antigo
-                                using var sourceStream = await DownloadFromFtpAsync(sourceUri);
-
-                                // Monta path no FTP novo
-                                var targetPathBuilder = new FtpImagePathBuilder(
-                                    oxford.FamilyDescription.Replace(" ", "_"),
-                                    oxford.BrandDescription.Replace(" ", "_"),
-                                    oxford.LineDescription.Replace(" ", "_"),
-                                    oxford.DecorationDescription.Replace(" ", "_"),
-                                    oxford.ProductId,
-                                    Finalidade.DECORACAO.ToString()
-                                );
-                                var targetPath = $"{targetPathBuilder.ToString()}/{fullPath}";
-
-                                // Garante diretório no FTP novo
-                                await _ftpService.EnsureDirectoryExistsAsync(targetPathBuilder);
-
-                                // Envia para o FTP novo
-                                await _ftpService.UploadAsync(targetPath, sourceStream);
-
-                                // Salva no banco
-                                var image = new Image
+                                if (!string.IsNullOrWhiteSpace(oxford.FamilyDescription) &&
+                                    !string.IsNullOrWhiteSpace(oxford.BrandDescription) &&
+                                    !string.IsNullOrWhiteSpace(oxford.LineDescription) &&
+                                    !string.IsNullOrWhiteSpace(oxford.DecorationDescription) &&
+                                    !string.IsNullOrWhiteSpace(oxford.ProductId))
                                 {
-                                    ProductId = nomeProduto,
-                                    ImagePath = targetPath,
-                                    Finalidade = Finalidade.DECORACAO.ToString(),
-                                };
+                                    var pathBuilder = new FtpImagePathBuilder(
+                                        oxford.FamilyDescription.Replace(" ", "_"),
+                                        oxford.BrandDescription.Replace(" ", "_"),
+                                        oxford.LineDescription.Replace(" ", "_"),
+                                        oxford.DecorationDescription.Replace(" ", "_"),
+                                        oxford.ProductId,
+                                        Finalidade.PRODUTO.ToString());
 
-                                await _imageRepository.AddRangeAsync(new List<Image> { image });
-                                await _imageRepository.SaveAsync();
+                                    var sourceUri = new Uri($"ftp://{_ftpHost}/imagens/{line}");
 
+                                    // Baixa imagem do FTP antigo
+                                    using var sourceStream = await DownloadFromFtpAsync(sourceUri);
+
+                                    // Monta path no FTP novo
+                                    var targetPathBuilder = new FtpImagePathBuilder(
+                                        oxford.FamilyDescription.Replace(" ", "_"),
+                                        oxford.BrandDescription.Replace(" ", "_"),
+                                        oxford.LineDescription.Replace(" ", "_"),
+                                        oxford.DecorationDescription.Replace(" ", "_"),
+                                        oxford.ProductId,
+                                        Finalidade.PRODUTO.ToString()
+                                    );
+                                    var targetPath = $"{targetPathBuilder.ToString()}/{nomeProduto}{extensao}";
+                                    //var targetPath = Path.Combine(targetPathBuilder.ToString(), nomeProduto + extensao);
+
+                                    // Garante diretório no FTP novo
+                                    await _ftpService.EnsureDirectoryExistsAsync(targetPathBuilder);
+
+                                    // Envia para o FTP novo
+                                    await _ftpService.UploadAsync(targetPath, sourceStream);
+
+                                    // Salva no banco
+                                    var image = new Image
+                                    {
+                                        ProductId = nomeProduto,
+                                        ImagePath = targetPath,
+                                        Finalidade = Finalidade.PRODUTO.ToString(),
+                                    };
+                                    await _imageRepository.AddOrUpdateAsync(image);
+                                    await _imageRepository.SaveAsync();
+                                    //await _imageRepository.AddRangeAsync(new List<Image> { image });
+                                    //await _imageRepository.SaveAsync();
+
+                                }
                             }
                         }
                     }
@@ -158,7 +176,7 @@ namespace OxfordOnline.Services
                         oxford.LineDescription.Replace(" ", "_"),
                         oxford.DecorationDescription.Replace(" ", "_"),
                         oxford.ProductId,
-                        Finalidade.DECORACAO.ToString());
+                        Finalidade.PRODUTO.ToString());
 
                         _logger.LogInformation("----> Caminho da imagem: {Path}", pathBuilder.BuildPath());
 
@@ -181,7 +199,7 @@ namespace OxfordOnline.Services
                                 oxford.LineDescription.Replace(" ", "_"),
                                 oxford.DecorationDescription.Replace(" ", "_"),
                                 oxford.ProductId,
-                                Finalidade.DECORACAO.ToString()
+                                Finalidade.PRODUTO.ToString()
                             );
                             var targetPath = $"{targetPathBuilder.ToString()}/{imageName}";
 
@@ -196,7 +214,9 @@ namespace OxfordOnline.Services
                             {
                                 ProductId = product.ProductId,
                                 ImagePath = targetPath,
-                                Finalidade = Finalidade.DECORACAO.ToString(),
+                                Sequence = 1,
+                                ImageMain = true,
+                                Finalidade = Finalidade.PRODUTO.ToString(),
                             };
 
                             await _imageRepository.AddRangeAsync(new List<Image> { image });

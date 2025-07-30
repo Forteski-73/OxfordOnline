@@ -75,7 +75,7 @@
   {
     "ContainingType": "OxfordOnline.Controllers.ImageController",
     "Method": "DownloadZipByProduct",
-    "RelativePath": "v1/Image/ProductImage/{productId}/{finalidade}",
+    "RelativePath": "v1/Image/ProductImage/{productId}/{finalidade}/{main}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -88,6 +88,11 @@
       {
         "Name": "finalidade",
         "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "main",
+        "Type": "System.Boolean",
         "IsRequired": true
       }
     ],
@@ -564,6 +569,37 @@
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetFullProductDetails",
+    "RelativePath": "v1/Product/Details",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "status",
+        "Type": "System.Boolean",
+        "IsRequired": false
+      },
+      {
+        "Name": "location_id",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "OxfordOnline.Models.Dto.ProductDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
     "Method": "GetProductDetails",
     "RelativePath": "v1/Product/productData/{productId}",
     "HttpMethod": "GET",
@@ -616,6 +652,58 @@
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetFilteredOxfordProducts",
+    "RelativePath": "v1/Product/ProductOxford",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "filters",
+        "Type": "OxfordOnline.Models.ProductOxfordFilters",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[OxfordOnline.Models.Dto.ProductOxford, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetFilteredOxfordProductDetails",
+    "RelativePath": "v1/Product/ProductOxfordDetails",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productIds",
+        "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[OxfordOnline.Models.Dto.ProductOxfordDetails, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
     "Method": "GetProductDataByIds",
     "RelativePath": "v1/Product/productsData",
     "HttpMethod": "POST",
@@ -631,6 +719,26 @@
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.List\u00601[[OxfordOnline.Models.ProductData, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetProductsSearch",
+    "RelativePath": "v1/Product/Search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[OxfordOnline.Models.Product, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",

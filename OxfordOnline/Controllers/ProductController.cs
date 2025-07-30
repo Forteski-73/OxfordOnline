@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OxfordOnline.Models;
+using OxfordOnline.Models.Dto;
+using OxfordOnline.Repositories;
 using OxfordOnline.Repositories.Interfaces;
 using OxfordOnline.Resources;
 using OxfordOnline.Services;
@@ -32,6 +35,21 @@ namespace OxfordOnline.Controllers
             return Ok(products);
         }
 
+        [Authorize]
+        [HttpGet("Search")] ///{productId}
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductsSearch(
+        [FromQuery] string? product,
+        [FromQuery] string? barcode,
+        [FromQuery] string? family,
+        [FromQuery] string? brand,
+        [FromQuery] string? line,
+        [FromQuery] string? decoration,
+        [FromQuery] string? nome)
+        {
+            var products = await _productService.GetSearchAsyncAsync(product, barcode, family, brand, line, decoration, nome);
+            return Ok(products);
+        }
+        
         // GET: /product/{productId}
         [Authorize]
         [HttpGet("{productId}")]
@@ -164,7 +182,7 @@ namespace OxfordOnline.Controllers
             return Ok(resultList);
         }
 
-        // POST: /product/productDataByIds
+        // POST: /product/productsData
         [Authorize]
         [HttpPost("productsData")]
         public async Task<ActionResult<List<ProductData>>> GetProductDataByIds([FromBody] List<string> productIds)
@@ -206,5 +224,37 @@ namespace OxfordOnline.Controllers
             return Ok("Ok");
         }
 
+        // GET: /Product/Details?status=true&location_id=SP01
+        [Authorize]
+        [HttpGet("Details")]
+        public async Task<ActionResult<ProductDetails>> GetFullProductDetails(
+            [FromQuery] bool status,
+            [FromQuery(Name = "location_id")] string locationId)
+        {
+            var details = await _productService.GetProductDetailsAsync(status, locationId);
+
+            if (details == null)
+                return NotFound(new { message = EndPointsMessages.ProductNotFound });
+
+            return Ok(details);
+        }
+
+        // POST: /Product/ProductOxford
+        [Authorize]
+        [HttpPost("ProductOxford")]
+        public async Task<ActionResult<List<ProductOxford>>> GetFilteredOxfordProducts([FromBody] ProductOxfordFilters filters)
+        {
+            var result = await _productService.GetProductOxfordAsync(filters);
+            return Ok(result);
+        }
+
+        // POST: /Product/ProductOxfordDetails
+        [Authorize]
+        [HttpPost("ProductOxfordDetails")]
+        public async Task<ActionResult<List<ProductOxfordDetails>>> GetFilteredOxfordProductDetails([FromBody] List<string> productIds)
+        {
+            var result = await _productService.GetFilteredOxfordProductDetailsAsync(productIds);
+            return Ok(result);
+        }
     }
 }

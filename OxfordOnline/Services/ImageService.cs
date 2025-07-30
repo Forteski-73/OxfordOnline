@@ -22,9 +22,9 @@ namespace OxfordOnline.Services
             return await _imageRepository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Image>> GetImagesByProductIdAsync(string productId, Finalidade finalidade)
+        public async Task<IEnumerable<Image>> GetImagesByProductIdAsync(string productId, Finalidade finalidade, bool main)
         {
-            return await _imageRepository.GetByProductIdAsync(productId, finalidade);
+            return await _imageRepository.GetByProductIdAsync(productId, finalidade, main);
         }
 
         public async Task<IEnumerable<Image>> CreateOrReplaceImagesAsync(List<Image> images)

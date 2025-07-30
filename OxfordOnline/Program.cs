@@ -108,7 +108,7 @@ builder.Services.AddScoped<IFtpServiceOxServer, FtpServiceOxServer>();
 builder.Services.AddScoped<FtpServiceOxServer>();
 
 builder.Services.AddScoped<IInventDimRepository, InventDimRepository>();
-builder.Services.AddScoped<InventDimRepository>();
+builder.Services.AddScoped<InventDimService>();
 
 // === Produção ===
 if (builder.Environment.IsProduction())

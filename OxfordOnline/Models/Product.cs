@@ -20,5 +20,13 @@ namespace OxfordOnline.Models
         [Column("barcode")]
         [MaxLength(20)]
         public string? Barcode { get; set; }
+
+        [Column("status")]
+        [Required]
+        public bool Status { get; set; } = true;
+
+        [Column("note")]
+        [MaxLength(255)]
+        public string? Note { get; set; }
     }
 }

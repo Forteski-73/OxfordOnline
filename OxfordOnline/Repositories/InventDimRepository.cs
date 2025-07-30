@@ -29,6 +29,12 @@ namespace OxfordOnline.Repositories
                 .ToListAsync();
         }
 
+        public async Task<InventDim?> GetInventDimByProductIdAsync(string productId)
+        {
+            return await _context.InventDim
+                .FirstOrDefaultAsync(id => id.ProductId == productId);
+        }
+
         public async Task AddAsync(InventDim inventDim)
         {
             await _context.InventDim.AddAsync(inventDim);

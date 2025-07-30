@@ -79,7 +79,7 @@ namespace OxfordOnline.Controllers
         [HttpGet("Product/{productId}/{finalidade}")]
         public async Task<ActionResult<IEnumerable<Image>>> GetImagesByProductId(string productId, Finalidade finalidade)
         {
-            var images = await _imageService.GetImagesByProductIdAsync(productId, finalidade);
+            var images = await _imageService.GetImagesByProductIdAsync(productId, finalidade, false);
             if (!images.Any())
                 return NotFound(new { message = EndPointsMessages.ImageNotFoundForProduct });
 
@@ -87,15 +87,15 @@ namespace OxfordOnline.Controllers
         }
 
         [Authorize]
-        [HttpGet("ProductImage/{productId}/{finalidade}")]
-        public async Task<IActionResult> DownloadZipByProduct(string productId, Finalidade finalidade)
+        [HttpGet("ProductImage/{productId}/{finalidade}/{main}")]
+        public async Task<IActionResult> DownloadZipByProduct(string productId, Finalidade finalidade, bool main = false)
         {
             if (string.IsNullOrWhiteSpace(productId))
                 return BadRequest("Produto inválido.");
 
             try
             {
-                var images = await _imageService.GetImagesByProductIdAsync(productId, finalidade);
+                var images = await _imageService.GetImagesByProductIdAsync(productId, finalidade, main);
 
                 if (images == null || !images.Any())
                     return NotFound("Nenhuma imagem encontrada para o produto.");
@@ -150,7 +150,7 @@ namespace OxfordOnline.Controllers
 
             try
             {
-                await _imageService.UpdateImagesByProductIdAsync(productId, finalidade,files);
+                await _imageService.UpdateImagesByProductIdAsync(productId, finalidade, files);
 
                 return Ok("Imagens substituídas com sucesso.");
             }

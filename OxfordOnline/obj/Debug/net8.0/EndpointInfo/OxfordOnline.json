@@ -141,7 +141,7 @@
         }
       }
     },
-    "/v1/Image/ProductImage/{productId}/{finalidade}": {
+    "/v1/Image/ProductImage/{productId}/{finalidade}/{main}": {
       "get": {
         "tags": [
           "Image"
@@ -161,6 +161,15 @@
             "required": true,
             "schema": {
               "$ref": "#/components/schemas/Finalidade"
+            }
+          },
+          {
+            "name": "main",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -909,6 +918,44 @@
         }
       }
     },
+    "/v1/Product/Search": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/Product/{productId}": {
       "get": {
         "tags": [
@@ -1227,6 +1274,174 @@
         }
       }
     },
+    "/v1/Product/Details": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/Product/ProductOxford": {
+      "post": {
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductOxfordFilters"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductOxfordFilters"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductOxfordFilters"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOxford"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOxford"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOxford"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/Product/ProductOxfordDetails": {
+      "post": {
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOxfordDetails"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOxfordDetails"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductOxfordDetails"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/TaxInformation": {
       "get": {
         "tags": [
@@ -1486,7 +1701,7 @@
       },
       "Finalidade": {
         "enum": [
-          "DECORACAO",
+          "PRODUTO",
           "EMBALAGEM",
           "PALETIZACAO",
           "TODOS"
@@ -1521,9 +1736,6 @@
           "finalidade": {
             "minLength": 1,
             "type": "string"
-          },
-          "product": {
-            "$ref": "#/components/schemas/Product"
           }
         },
         "additionalProperties": false
@@ -1823,7 +2035,8 @@
       },
       "Product": {
         "required": [
-          "productId"
+          "productId",
+          "status"
         ],
         "type": "object",
         "properties": {
@@ -1839,6 +2052,14 @@
           },
           "barcode": {
             "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "boolean"
+          },
+          "note": {
+            "maxLength": 255,
             "type": "string",
             "nullable": true
           }
@@ -1859,6 +2080,252 @@
           },
           "taxInformation": {
             "$ref": "#/components/schemas/TaxInformation"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductDetails": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          },
+          "oxford": {
+            "$ref": "#/components/schemas/Oxford"
+          },
+          "taxInformation": {
+            "$ref": "#/components/schemas/TaxInformation"
+          },
+          "invent": {
+            "$ref": "#/components/schemas/Invent"
+          },
+          "location": {
+            "$ref": "#/components/schemas/InventDim"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Image"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductInvent": {
+        "type": "object",
+        "properties": {
+          "netWeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "taraWeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossWeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossDepth": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossWidth": {
+            "type": "number",
+            "format": "double"
+          },
+          "grossHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitVolume": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitVolumeML": {
+            "type": "number",
+            "format": "double"
+          },
+          "nrOfItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unitId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductOxford": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "line": {
+            "type": "string",
+            "nullable": true
+          },
+          "decoration": {
+            "type": "string",
+            "nullable": true
+          },
+          "thumbUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "invent": {
+            "$ref": "#/components/schemas/ProductInvent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductOxfordDetails": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "line": {
+            "type": "string",
+            "nullable": true
+          },
+          "decoration": {
+            "type": "string",
+            "nullable": true
+          },
+          "productDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "images": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "invent": {
+            "$ref": "#/components/schemas/ProductInvent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductOxfordFilters": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "brandId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "decorationId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "familyId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "typeId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "processId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "situationId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "lineId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "qualityId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "baseProductId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "productGroupId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -29,14 +29,21 @@ namespace OxfordOnline.Repositories
             return await _context.Image.FindAsync(id);
         }
 
-        public async Task<IEnumerable<Image>> GetByProductIdAsync(string productId, Finalidade finalidade)
+        public async Task<IEnumerable<Image>> GetByProductIdAsync(string productId, Finalidade finalidade, bool main)
         {
-            var query = _context.Image
-                .Where(i => i.ProductId == productId);
+            var query = _context.Image.AsQueryable();
+
+            query = query.Where(i => i.ProductId == productId);
 
             if (finalidade != Finalidade.TODOS)
             {
                 query = query.Where(i => i.Finalidade == finalidade.ToString());
+            }
+
+            if (main)
+            {
+                // Se main == true, filtra apenas as imagens principais
+                query = query.Where(i => i.ImageMain);
             }
 
             return await query
@@ -69,6 +76,26 @@ namespace OxfordOnline.Repositories
         public async Task SaveAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task AddOrUpdateAsync(Image image)
+        {
+            var existing = await _context.Image
+                .FirstOrDefaultAsync(i => i.ProductId == image.ProductId && i.ImagePath == image.ImagePath);
+
+            if (existing == null)
+            {
+                await _context.Image.AddAsync(image);
+            }
+            else
+            {
+                // Atualiza campos necessários
+                existing.Finalidade = image.Finalidade;
+                existing.ImagePath = image.ImagePath;
+                existing.Sequence = image.Sequence;
+                existing.ImageMain = image.ImageMain;
+                _context.Image.Update(existing);
+            }
         }
 
         public async Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files)
@@ -125,6 +152,8 @@ namespace OxfordOnline.Repositories
                         _context.Image.Remove(image);  // remove a imagem do contexto
                     }
 
+                    int seqImg = 1;
+                    bool mainImg = true;
                     foreach (var file in files)
                     {
                         if (file.Length == 0) continue;
@@ -143,8 +172,13 @@ namespace OxfordOnline.Repositories
                             ProductId = productId,
                             ImagePath = ftpPath,
                             Finalidade = finalidade.ToString(),
+                            Sequence = seqImg,
+                            ImageMain = mainImg
                         };
                         _context.Image.Add(imageNew); // adiciona a nova imagem ao contexto
+
+                        mainImg = false;
+                        seqImg++;
                     }
                     _logger.LogError("**** ATUALIZOU DB ****");
                     await _context.SaveChangesAsync(); // atualiza o banco de dados
@@ -169,6 +203,21 @@ namespace OxfordOnline.Repositories
         public async Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath)
         {
             return await _ftpService.DownloadAsync(ftpFilePath);
+        }
+
+        public async Task<List<Image>> GetByProductAsync(string productId, Finalidade finalidade)
+        {
+            var query = _context.Image
+                .Where(i => i.ProductId == productId);
+
+            if (finalidade != Finalidade.TODOS)
+            {
+                query = query.Where(i => i.Finalidade == finalidade.ToString());
+            }
+
+            return await query
+                .OrderBy(i => i.Sequence)
+                .ToListAsync();
         }
     }
 }

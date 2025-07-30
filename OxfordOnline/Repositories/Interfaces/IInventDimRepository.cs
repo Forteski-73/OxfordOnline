@@ -6,6 +6,7 @@ namespace OxfordOnline.Repositories.Interfaces
     {
         Task<InventDim?> GetByKeysAsync(string productId, string? locationId, string? companyId);
         Task<List<InventDim>> GetByProductIdAsync(string productId);
+        Task<InventDim?> GetInventDimByProductIdAsync(string productId);
         Task AddAsync(InventDim inventDim);
         Task UpdateAsync(InventDim inventDim);
         Task DeleteAsync(InventDim inventDim);

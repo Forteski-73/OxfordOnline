@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OxfordOnline.Models;
+using OxfordOnline.Models.Dto;
 using OxfordOnline.Models.Enums;
 using OxfordOnline.Repositories.Interfaces;
 using static System.Net.Mime.MediaTypeNames;
@@ -11,26 +12,32 @@ namespace OxfordOnline.Services
         private readonly IProductRepository         _repo;
         private readonly IOxfordRepository          _oxfordRepo;
         private readonly IInventRepository          _inventRepo;
+        private readonly IInventDimRepository       _inventDimRepo;
         private readonly ITaxInformationRepository  _taxRepo;
-        //private readonly IImageRepository           _imageRepo;
+        private readonly IImageRepository           _imageRepo;
 
         public ProductService(
             IProductRepository          repo,
             IOxfordRepository           oxfordRepo,
             IInventRepository           inventRepo,
-            ITaxInformationRepository   taxRepo)
-            //IImageRepository            imageRepo
+            IInventDimRepository        inventDimRepo,
+            ITaxInformationRepository   taxRepo,
+            IImageRepository            imageRepo)
         {
-            _repo       = repo;
-            _oxfordRepo = oxfordRepo;
-            _inventRepo = inventRepo;
-            _taxRepo    = taxRepo;
-            //_imageRepo  = imageRepo;
+            _repo           = repo;
+            _oxfordRepo     = oxfordRepo;
+            _inventRepo     = inventRepo;
+            _inventDimRepo  = inventDimRepo;
+            _taxRepo        = taxRepo;
+            _imageRepo      = imageRepo;
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync() =>
             await _repo.GetAllAsync();
-
+        public async Task<IEnumerable<Product>> GetSearchAsyncAsync(
+            string? product, string? barcode, string? family, string? brand, string? line, string? decoration, string? nome) =>
+            await _repo.GetSearchAsync( product, barcode, family, brand, line, decoration, nome);
+        
         public async Task<Product?> GetProductByIdAsync(String productId) =>
             await _repo.GetByProductIdAsync(productId);
 
@@ -112,6 +119,51 @@ namespace OxfordOnline.Services
         {
             var prod = await _repo.GetFirstAsync();
             return prod;
+        }
+
+        public async Task<List<ProductDetails>> GetProductDetailsAsync(bool status, string locationId)
+        {
+            var products = await _repo.GetByStatusAndLocationAsync(status, locationId);
+
+            if (products == null || !products.Any())
+                return new List<ProductDetails>();
+
+            var detailsList = new List<ProductDetails>();
+
+            foreach (var product in products)
+            {
+                var productId = product.ProductId;
+
+                var oxford      = await _oxfordRepo.    GetByProductIdAsync(productId);
+                var invent      = await _inventRepo.    GetByProductIdAsync(productId);
+                var taxInfo     = await _taxRepo.       GetByProductIdAsync(productId);
+                var inventDim   = await _inventDimRepo. GetInventDimByProductIdAsync(productId);
+                var images      = await _imageRepo.     GetByProductAsync(productId, Finalidade.TODOS);
+
+                var details = new ProductDetails
+                {
+                    Product         = product,
+                    Oxford          = oxford,
+                    TaxInformation  = taxInfo,
+                    Invent          = invent,
+                    Location        = inventDim,
+                    Images          = images,
+                };
+
+                detailsList.Add(details);
+            }
+
+            return detailsList;
+        }
+
+        public async Task<List<ProductOxford>> GetProductOxfordAsync(ProductOxfordFilters filters)
+        {
+            return await _repo.GetProductOxfordAsync(filters);
+        }
+
+        public async Task<List<ProductOxfordDetails>> GetFilteredOxfordProductDetailsAsync(List<string> products)
+        {
+            return await _repo.GetFilteredOxfordProductDetailsAsync(products);
         }
     }
 }

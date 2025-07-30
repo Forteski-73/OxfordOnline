@@ -31,10 +31,11 @@ namespace OxfordOnline.Models
 
         [Required]
         [Column("finalidade")]
-        public string Finalidade { get; set; } = "Web";
+        public string Finalidade { get; set; } = "PRODUTO";
 
         // Navegação
         [ForeignKey(nameof(ProductId))]
+        [JsonIgnore]
         public virtual Product? Product { get; set; }
     }
 }
