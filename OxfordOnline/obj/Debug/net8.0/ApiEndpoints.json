@@ -735,7 +735,43 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "product",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "barcode",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "family",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "brand",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "line",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "decoration",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "nome",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": [
       {
         "Type": "System.Collections.Generic.IEnumerable\u00601[[OxfordOnline.Models.Product, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",

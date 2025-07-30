@@ -180,6 +180,94 @@ namespace OxfordOnline.Repositories
         public async Task<List<ProductOxford>> GetProductOxfordAsync(ProductOxfordFilters filters)
         {
             var query = from p in _context.Product
+                        join o in _context.Oxford on p.ProductId equals o.ProductId
+                        where p.Status
+                        select new { Product = p, Oxford = o };
+
+            // Aplica filtros dinamicamente
+            if (filters.FamilyId?.Any() == true)
+                query = query.Where(q => filters.FamilyId.Contains(q.Oxford.FamilyId));
+            if (filters.BrandId?.Any() == true)
+                query = query.Where(q => filters.BrandId.Contains(q.Oxford.BrandId));
+            if (filters.DecorationId?.Any() == true)
+                query = query.Where(q => filters.DecorationId.Contains(q.Oxford.DecorationId));
+            if (filters.TypeId?.Any() == true)
+                query = query.Where(q => filters.TypeId.Contains(q.Oxford.TypeId));
+            if (filters.ProcessId?.Any() == true)
+                query = query.Where(q => filters.ProcessId.Contains(q.Oxford.ProcessId));
+            if (filters.SituationId?.Any() == true)
+                query = query.Where(q => filters.SituationId.Contains(q.Oxford.SituationId));
+            if (filters.LineId?.Any() == true)
+                query = query.Where(q => filters.LineId.Contains(q.Oxford.LineId));
+            if (filters.QualityId?.Any() == true)
+                query = query.Where(q => filters.QualityId.Contains(q.Oxford.QualityId));
+            if (filters.BaseProductId?.Any() == true)
+                query = query.Where(q => filters.BaseProductId.Contains(q.Oxford.BaseProductId));
+            if (filters.ProductGroupId?.Any() == true)
+                query = query.Where(q => filters.ProductGroupId.Contains(q.Oxford.ProductGroupId));
+
+            // Executa a primeira parte do query
+            var partial = await query.ToListAsync();
+
+            // Carrega relacionamentos externos separadamente (reduz problemas de join duplicado)
+            var productIds = partial.Select(x => x.Product.ProductId).ToList();
+
+            var invents = await _context.Invent
+                .Where(i => productIds.Contains(i.ProductId))
+                .ToDictionaryAsync(i => i.ProductId);
+
+            var inventDims = await _context.InventDim
+                .Where(i => productIds.Contains(i.ProductId))
+                .GroupBy(i => i.ProductId)
+                .ToDictionaryAsync(g => g.Key, g => g.First());
+
+            var images = await _context.Image
+                .Where(i => productIds.Contains(i.ProductId) && i.ImageMain && i.Finalidade == "PRODUTO")
+                .GroupBy(i => i.ProductId)
+                .ToDictionaryAsync(g => g.Key, g => g.First().ImagePath);
+
+            // Projeta final
+            var list = partial
+                .Select(q =>
+                {
+                    var inv = invents.GetValueOrDefault(q.Product.ProductId);
+                    var dim = inventDims.GetValueOrDefault(q.Product.ProductId);
+                    var img = images.GetValueOrDefault(q.Product.ProductId);
+
+                    return new ProductOxford
+                    {
+                        ProductId = q.Product.ProductId,
+                        Name = q.Product.ProductName ?? string.Empty,
+                        Price = dim?.Price ?? 0,
+                        Quantity = dim?.Quantity ?? 0,
+                        Brand = q.Oxford.BrandDescription ?? string.Empty,
+                        Line = q.Oxford.LineDescription ?? string.Empty,
+                        Decoration = q.Oxford.DecorationDescription ?? string.Empty,
+                        ThumbUrl = img ?? string.Empty,
+                        Invent = new ProductInvent
+                        {
+                            NetWeight = inv?.NetWeight ?? 0,
+                            TaraWeight = inv?.TaraWeight ?? 0,
+                            GrossWeight = inv?.GrossWeight ?? 0,
+                            GrossDepth = inv?.GrossDepth ?? 0,
+                            GrossWidth = inv?.GrossWidth ?? 0,
+                            GrossHeight = inv?.GrossHeight ?? 0,
+                            UnitVolume = inv?.UnitVolume ?? 0,
+                            UnitVolumeML = inv?.UnitVolumeML ?? 0,
+                            NrOfItems = inv?.NrOfItems ?? 0,
+                            UnitId = inv?.UnitId ?? string.Empty
+                        }
+                    };
+                }).ToList();
+
+            return list;
+        }
+
+
+        /*
+        public async Task<List<ProductOxford>> GetProductOxfordAsync(ProductOxfordFilters filters)
+        {
+            var query = from p in _context.Product
                         where p.Status
                         join o in _context.Oxford on p.ProductId equals o.ProductId
                         join i in _context.Invent on p.ProductId equals i.ProductId into inventGroup
@@ -253,6 +341,7 @@ namespace OxfordOnline.Repositories
 
             return list;
         }
+        */
         public async Task<List<ProductOxfordDetails>> GetFilteredOxfordProductDetailsAsync(List<string> products)
         {
             // Consulta agrupada por produto
