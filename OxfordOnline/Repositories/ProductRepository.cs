@@ -96,8 +96,11 @@ namespace OxfordOnline.Repositories
             if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
                 query = query.Where(q => q.ox != null && filterRequest.DecorationId.Contains(q.ox.DecorationId));
 
-            if (filterRequest.Name != null && filterRequest.Name.Any())
-                query = query.Where(q => q.p.ProductName != null && filterRequest.Name.Any(n => q.p.ProductName.Contains(n)));
+            // Trata o filtro de Nome como um texto único
+            if (!string.IsNullOrWhiteSpace(filterRequest.Name))
+            {
+                query = query.Where(q => q.p.ProductName != null && q.p.ProductName.Contains(filterRequest.Name));
+            }
 
             // Primeiro, executamos a consulta para buscar os produtos do banco de dados
             var productsFromDb = await query

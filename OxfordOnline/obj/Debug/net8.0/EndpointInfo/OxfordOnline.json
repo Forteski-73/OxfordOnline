@@ -1822,10 +1822,7 @@
             "nullable": true
           },
           "name": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
+            "type": "string",
             "nullable": true
           },
           "brandId": {
