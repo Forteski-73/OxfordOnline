@@ -569,6 +569,32 @@
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetProductAppSearch",
+    "RelativePath": "v1/Product/AppSearch",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "filter",
+        "Type": "OxfordOnline.Models.AppProductFilterRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[OxfordOnline.Models.Dto.ProductApp, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
     "Method": "GetFullProductDetails",
     "RelativePath": "v1/Product/Details",
     "HttpMethod": "GET",

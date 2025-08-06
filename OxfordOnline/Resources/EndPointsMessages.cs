@@ -6,6 +6,7 @@
         public const string TokenInvalid             = "Token inválido.";
         public const string TokenFormatInvalid       = "Insira o token no formato: Bearer {seu_token}";
         public const string UserAndPasswordRequired  = "Usuário e senha obrigatórios.";
+        public const string EmailRequired            = "Email não encontrado.";
         public const string UserAlreadyRegistered    = "Usuário já cadastrado.";
         public const string UserRegisteredSuccess    = "Usuário cadastrado com sucesso.";
         public const string InvalidUserOrPassword    = "Usuário ou senha inválidos.";

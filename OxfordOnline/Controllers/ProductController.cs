@@ -49,7 +49,22 @@ namespace OxfordOnline.Controllers
             var products = await _productService.GetSearchAsyncAsync(product, barcode, family, brand, line, decoration, nome);
             return Ok(products);
         }
-        
+
+
+        [Authorize]
+        [HttpPost("AppSearch")] ///{productId}
+        public async Task<ActionResult<IEnumerable<ProductApp>>> GetProductAppSearch([FromBody] AppProductFilterRequest filter)
+        {
+            if (filter == null)
+                return BadRequest(new { message = "Filtro inválido." });
+
+            var productsApp = await _productService.GetAppSearchAsyncAsync(filter);
+            if (productsApp == null)
+                return NotFound(new { message = "Nenhum produto encontrado com os filtros fornecidos." });
+
+            return Ok(productsApp);
+        }
+
         // GET: /product/{productId}
         [Authorize]
         [HttpGet("{productId}")]

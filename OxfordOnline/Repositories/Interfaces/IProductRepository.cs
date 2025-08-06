@@ -12,6 +12,7 @@ namespace OxfordOnline.Repositories.Interfaces
         Task<List<ProductOxfordDetails>> GetFilteredOxfordProductDetailsAsync(List<string> products);
         Task<IEnumerable<Product>> GetAllAsync();
         Task<IEnumerable<Product>> GetSearchAsync(string? product, string? barcode, string? family, string? brand, string? line, string? decoration, string? nome);
+        Task<IEnumerable<ProductApp>> GetAppSearchAsync(AppProductFilterRequest filterRequest);
         Task<Product?> GetFirstAsync();
         Task AddAsync(Product product);
         Task UpdateAsync(Product product);

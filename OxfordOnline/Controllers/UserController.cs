@@ -29,7 +29,9 @@ namespace OxfordOnline.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromHeader(Name = "Authorization")] string authHeader, [FromBody] ApiUser user)
+        public async Task<IActionResult> Register(
+            [FromHeader(Name = "Authorization")] string authHeader,
+            [FromBody] ApiUser user)
         {
             if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
                 return Unauthorized(new { message = EndPointsMessages.TokenMissingOrInvalid });
@@ -42,6 +44,17 @@ namespace OxfordOnline.Controllers
             if (string.IsNullOrWhiteSpace(user.User) || string.IsNullOrWhiteSpace(user.Password))
                 return BadRequest(new { message = EndPointsMessages.UserAndPasswordRequired });
 
+            if (string.IsNullOrWhiteSpace(user.Account))
+            {
+                return BadRequest(new { message = EndPointsMessages.EmailRequired });
+            }
+
+            bool emailExists = await _context.UserAccount.AnyAsync(ua => ua.Email == user.Account);
+            if (!emailExists)
+            {
+                return BadRequest(new { message = EndPointsMessages.EmailRequired });
+            }
+
             bool exists = await _context.ApiUser.AnyAsync(u => u.User == user.User);
             if (exists)
                 return Conflict(new { message = EndPointsMessages.UserAlreadyRegistered });
@@ -53,7 +66,8 @@ namespace OxfordOnline.Controllers
                 _context.ApiUser.Add(new ApiUser
                 {
                     User = user.User,
-                    Password = hash
+                    Password = hash,
+                    Account = user.Account
                 });
 
                 await _context.SaveChangesAsync();
@@ -69,6 +83,7 @@ namespace OxfordOnline.Controllers
                 });
             }
         }
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] ApiUser user)

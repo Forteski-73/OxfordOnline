@@ -37,7 +37,10 @@ namespace OxfordOnline.Services
         public async Task<IEnumerable<Product>> GetSearchAsyncAsync(
             string? product, string? barcode, string? family, string? brand, string? line, string? decoration, string? nome) =>
             await _repo.GetSearchAsync( product, barcode, family, brand, line, decoration, nome);
-        
+
+        public async Task<IEnumerable<ProductApp>> GetAppSearchAsyncAsync(AppProductFilterRequest filterRequest) =>
+            await _repo.GetAppSearchAsync(filterRequest);
+
         public async Task<Product?> GetProductByIdAsync(String productId) =>
             await _repo.GetByProductIdAsync(productId);
 

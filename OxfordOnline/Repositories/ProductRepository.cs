@@ -1,18 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OxfordOnline.Data;
 using OxfordOnline.Models;
 using OxfordOnline.Models.Dto;
+using OxfordOnline.Models.Enums;
 using OxfordOnline.Repositories.Interfaces;
+using OxfordOnline.Services;
+using System.IO.Compression;
 
 namespace OxfordOnline.Repositories
 {
     public class ProductRepository : IProductRepository
     {
         private readonly AppDbContext _context;
+        private readonly IImageRepository _imageRepository;
+        private readonly ILogger<ProductRepository> _logger;
 
-        public ProductRepository(AppDbContext context)
+        public ProductRepository(AppDbContext context, IImageRepository imageRepository, ILogger<ProductRepository> logger)
         {
             _context = context;
+            _imageRepository = imageRepository;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Product>> GetAllAsync() =>
@@ -59,6 +67,114 @@ namespace OxfordOnline.Repositories
                 .Take(21)
                 .Select(q => q.p)
                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ProductApp>> GetAppSearchAsync(AppProductFilterRequest filterRequest)
+        {
+            var query = from p in _context.Product
+                        join o in _context.Oxford on p.ProductId equals o.ProductId into oxJoin
+                        from ox in oxJoin.DefaultIfEmpty()
+                        where p.Status == true
+                        select new { p, ox };
+
+            // Aplica os filtros baseados no AppProductFilterRequest
+            if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
+                query = query.Where(q => filterRequest.ProductId.Contains(q.p.ProductId));
+
+            // Nota: O filtro de Barcode foi removido, pois não está presente no AppProductFilterRequest fornecido.
+            // Se precisar dele, adicione-o ao AppProductFilterRequest.
+
+            if (filterRequest.FamilyId != null && filterRequest.FamilyId.Any())
+                query = query.Where(q => q.ox != null && filterRequest.FamilyId.Contains(q.ox.FamilyId));
+
+            if (filterRequest.BrandId != null && filterRequest.BrandId.Any())
+                query = query.Where(q => q.ox != null && filterRequest.BrandId.Contains(q.ox.BrandId));
+
+            if (filterRequest.LineId != null && filterRequest.LineId.Any())
+                query = query.Where(q => q.ox != null && filterRequest.LineId.Contains(q.ox.LineId));
+
+            if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
+                query = query.Where(q => q.ox != null && filterRequest.DecorationId.Contains(q.ox.DecorationId));
+
+            if (filterRequest.Name != null && filterRequest.Name.Any())
+                query = query.Where(q => q.p.ProductName != null && filterRequest.Name.Any(n => q.p.ProductName.Contains(n)));
+
+            // Primeiro, executamos a consulta para buscar os produtos do banco de dados
+            var productsFromDb = await query
+                .OrderBy(q => q.p.ProductId)
+                .Take(20)
+                .Select(q => q.p)
+                .ToListAsync();
+
+            // Em seguida, criamos a lista que será retornada
+            var productAppList = new List<ProductApp>();
+
+            // Iteramos sobre cada produto para buscar e processar as imagens
+            foreach (var p in productsFromDb)
+            {
+                var productId = p.ProductId;
+
+                // Cria o objeto DTO
+                var productApp = new ProductApp
+                {
+                    ProductId = p.ProductId,
+                    Barcode = p.Barcode,
+                    Name = p.ProductName
+                };
+
+                try
+                {
+                    // Recupera as imagens do produto
+                    var images = await _imageRepository.GetByProductIdAsync(productId, Finalidade.PRODUTO, true);
+
+                    // Verifica se há imagens e, se sim, cria o zip em Base64
+                    if (images != null && images.Any())
+                    {
+                        using (var zipStream = new MemoryStream())
+                        {
+                            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+                            {
+                                foreach (var img in images)
+                                {
+                                    if (string.IsNullOrWhiteSpace(img.ImagePath))
+                                        continue;
+
+                                    var ftpRelativePath = img.ImagePath.TrimStart('/').Replace('\\', '/');
+                                    var fileName = Path.GetFileName(ftpRelativePath);
+
+                                    try
+                                    {
+                                        var stream = await _imageRepository.DownloadFileStreamFromFtpAsync(ftpRelativePath);
+                                        var entry = archive.CreateEntry(fileName, CompressionLevel.Fastest);
+
+                                        using (var entryStream = entry.Open())
+                                        {
+                                            await stream.CopyToAsync(entryStream);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, $"*** Erro ao adicionar imagem {fileName} no zip para o produto {productId} ***");
+                                    }
+                                }
+                            }
+
+                            // Converte o MemoryStream do zip para array de bytes e depois para Base64
+                            var zipBytes = zipStream.ToArray();
+                            productApp.ImageZipBase64 = Convert.ToBase64String(zipBytes);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"*** Erro ao processar imagens para o produto {productId} ***");
+                    // Se ocorrer um erro, ImageZipBase64 ficará nulo ou string vazia, o que é aceitável.
+                }
+
+                productAppList.Add(productApp);
+            }
+
+            return productAppList;
         }
 
         public async Task<Product?> GetByProductIdAsync(string productId) =>
@@ -263,85 +379,6 @@ namespace OxfordOnline.Repositories
             return list;
         }
 
-
-        /*
-        public async Task<List<ProductOxford>> GetProductOxfordAsync(ProductOxfordFilters filters)
-        {
-            var query = from p in _context.Product
-                        where p.Status
-                        join o in _context.Oxford on p.ProductId equals o.ProductId
-                        join i in _context.Invent on p.ProductId equals i.ProductId into inventGroup
-                        from invent in inventGroup.DefaultIfEmpty()
-                        join id in _context.InventDim on p.ProductId equals id.ProductId into inventDimGroup
-                        from inventDim in inventDimGroup.DefaultIfEmpty()
-                        join img in _context.Image
-                            .Where(x => x.ImageMain && x.Finalidade == "PRODUTO")
-                            on p.ProductId equals img.ProductId into imageGroup
-                        from image in imageGroup.DefaultIfEmpty()
-                        select new
-                        {
-                            Product = p,
-                            Oxford = o,
-                            Invent = invent,
-                            InventDim = inventDim,
-                            ImagePath = image.ImagePath
-                        };
-
-            // Aplica filtros dinamicamente antes da projeção
-            if (filters.FamilyId?.Any() == true)
-                query = query.Where(q => filters.FamilyId.Contains(q.Oxford.FamilyId));
-            if (filters.BrandId?.Any() == true)
-                query = query.Where(q => filters.BrandId.Contains(q.Oxford.BrandId));
-            if (filters.DecorationId?.Any() == true)
-                query = query.Where(q => filters.DecorationId.Contains(q.Oxford.DecorationId));
-            if (filters.TypeId?.Any() == true)
-                query = query.Where(q => filters.TypeId.Contains(q.Oxford.TypeId));
-            if (filters.ProcessId?.Any() == true)
-                query = query.Where(q => filters.ProcessId.Contains(q.Oxford.ProcessId));
-            if (filters.SituationId?.Any() == true)
-                query = query.Where(q => filters.SituationId.Contains(q.Oxford.SituationId));
-            if (filters.LineId?.Any() == true)
-                query = query.Where(q => filters.LineId.Contains(q.Oxford.LineId));
-            if (filters.QualityId?.Any() == true)
-                query = query.Where(q => filters.QualityId.Contains(q.Oxford.QualityId));
-            if (filters.BaseProductId?.Any() == true)
-                query = query.Where(q => filters.BaseProductId.Contains(q.Oxford.BaseProductId));
-            if (filters.ProductGroupId?.Any() == true)
-                query = query.Where(q => filters.ProductGroupId.Contains(q.Oxford.ProductGroupId));
-
-            var sql = query.ToQueryString();
-            Console.WriteLine(sql); // Ou logue com ILogger
-
-            // Projeta para ProductOxford diretamente no banco
-            var list = await query.Select(q => new ProductOxford
-            {
-                ProductId = q.Product.ProductId,
-                Name = q.Product.ProductName ?? string.Empty,
-                Price = q.InventDim != null ? q.InventDim.Price.GetValueOrDefault() : 0,
-                Quantity = q.InventDim != null ? q.InventDim.Quantity.GetValueOrDefault() : 0,
-                Brand = q.Oxford.BrandDescription ?? string.Empty,
-                Line = q.Oxford.LineDescription ?? string.Empty,
-                Decoration = q.Oxford.DecorationDescription ?? string.Empty,
-                ThumbUrl = q.ImagePath ?? string.Empty,
-
-                Invent = new ProductInvent
-                {
-                    NetWeight = q.Invent != null ? q.Invent.NetWeight.GetValueOrDefault() : 0,
-                    TaraWeight = q.Invent != null ? q.Invent.TaraWeight.GetValueOrDefault() : 0,
-                    GrossWeight = q.Invent != null ? q.Invent.GrossWeight.GetValueOrDefault() : 0,
-                    GrossDepth = q.Invent != null ? q.Invent.GrossDepth.GetValueOrDefault() : 0,
-                    GrossWidth = q.Invent != null ? q.Invent.GrossWidth.GetValueOrDefault() : 0,
-                    GrossHeight = q.Invent != null ? q.Invent.GrossHeight.GetValueOrDefault() : 0,
-                    UnitVolume = q.Invent != null ? q.Invent.UnitVolume.GetValueOrDefault() : 0,
-                    UnitVolumeML = q.Invent != null ? q.Invent.UnitVolumeML.GetValueOrDefault() : 0,
-                    NrOfItems = q.Invent != null ? q.Invent.NrOfItems.GetValueOrDefault() : 0,
-                    UnitId = q.Invent != null ? q.Invent.UnitId : string.Empty
-                }
-            }).ToListAsync();
-
-            return list;
-        }
-        */
         public async Task<List<ProductOxfordDetails>> GetFilteredOxfordProductDetailsAsync(List<string> products)
         {
             // Consulta agrupada por produto

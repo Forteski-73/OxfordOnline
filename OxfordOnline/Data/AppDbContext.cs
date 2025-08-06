@@ -16,6 +16,8 @@ namespace OxfordOnline.Data
 
         public DbSet<ApiUser> ApiUser { get; set; }
 
+        public DbSet<UserAccount> UserAccount { get; set; }
+
         public DbSet<Product> Product { get; set; }
 
         public DbSet<Image> Image { get; set; }
