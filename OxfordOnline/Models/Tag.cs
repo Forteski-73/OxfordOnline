@@ -18,9 +18,5 @@ namespace OxfordOnline.Models
         [Column("product_id")]
         [MaxLength(20)]
         public string ProductId { get; set; } = string.Empty;
-
-        // Navegação para Product
-        [ForeignKey(nameof(ProductId))]
-        public virtual Product? Product { get; set; }
     }
 }

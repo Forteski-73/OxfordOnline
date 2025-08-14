@@ -65,6 +65,15 @@ namespace OxfordOnline.Controllers
             return Ok(productsApp);
         }
 
+        [Authorize]
+        [HttpGet("AppProduct/{product}")]
+        public async Task<ActionResult<IEnumerable<ProductComplete>>> GetProductsSearch(string product)
+        {
+            var products = await _productService.GetAppProductAsync(product);
+            return Ok(products);
+        }
+
+
         // GET: /product/{productId}
         [Authorize]
         [HttpGet("{productId}")]

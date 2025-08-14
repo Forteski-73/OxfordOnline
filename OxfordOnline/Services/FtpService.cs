@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using OxfordOnline.Controllers;
 using OxfordOnline.Repositories.Interfaces;
 using OxfordOnline.Utils;
 using System;
@@ -13,14 +14,18 @@ namespace OxfordOnline.Services
         private readonly string _ftpHost;
         private readonly string _ftpUser;
         private readonly string _ftpPassword;
+        private readonly IFtpService _ftpService;
+        private readonly ILogger<ImageController> _logger;
 
-        public FtpService(IConfiguration configuration)
+        public FtpService(IConfiguration configuration, ILogger<ImageController> logger)
         {
             _ftpHost = configuration["Ftp:Host"] ?? throw new ArgumentNullException("Ftp:Host");
             _ftpUser = configuration["Ftp:User"] ?? throw new ArgumentNullException("Ftp:User");
             _ftpPassword = configuration["Ftp:Password"] ?? throw new ArgumentNullException("Ftp:Password");
+            _logger = logger;
         }
 
+        /*
         public async Task UploadAsync(string remotePath, Stream content)
         {
             var uri = new Uri($"ftp://{_ftpHost}/{remotePath}");
@@ -38,6 +43,66 @@ namespace OxfordOnline.Services
             using var response = (FtpWebResponse)await request.GetResponseAsync();
             // Opcional: você pode validar response.StatusDescription
         }
+        */
+
+        public async Task UploadAsync(string remotePath, Stream content)
+        {
+            try
+            {
+                var uri = new Uri($"ftp://{_ftpHost}/{remotePath}");
+                var request = (FtpWebRequest)WebRequest.Create(uri);
+                request.Method = WebRequestMethods.Ftp.UploadFile;
+                request.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+                request.UseBinary = true;
+                request.UsePassive = true;
+                request.KeepAlive = false;
+
+                _logger.LogInformation($"Iniciando upload para: {uri}");
+
+                // Copia o conteúdo do stream para o stream da requisição
+                using (var requestStream = await request.GetRequestStreamAsync())
+                {
+                    await content.CopyToAsync(requestStream);
+                }
+
+                // Obtém a resposta do servidor FTP
+                using (var response = (FtpWebResponse)await request.GetResponseAsync())
+                {
+                    // Valida se o upload foi bem-sucedido. O status de "ClosingData"
+                    // geralmente indica uma transferência de arquivo bem-sucedida.
+                    if (response.StatusCode == FtpStatusCode.ClosingData)
+                    {
+                        _logger.LogInformation($"Upload concluído com sucesso para {remotePath}. Status: {response.StatusDescription}");
+                    }
+                    else
+                    {
+                        // Emite um aviso caso o status não seja o esperado.
+                        _logger.LogWarning($"Upload para {remotePath} pode ter falhado. Status: {response.StatusDescription}");
+                    }
+                }
+            }
+            catch (WebException ex)
+            {
+                // Captura exceções específicas de rede ou FTP.
+                var response = ex.Response as FtpWebResponse;
+                if (response != null)
+                {
+                    _logger.LogError($"Erro no upload FTP para {remotePath}. Status: {response.StatusDescription}");
+                }
+                else
+                {
+                    _logger.LogError($"Erro de conexão ou genérico no upload para {remotePath}. Mensagem: {ex.Message}");
+                }
+                // Relança a exceção para o método chamador, permitindo que o problema seja tratado em um nível superior.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Captura outras exceções inesperadas.
+                _logger.LogError(ex, $"Erro inesperado durante o upload para {remotePath}.");
+                throw;
+            }
+        }
 
         public async Task DeleteAsync(string remotePath)
         {
@@ -48,19 +113,21 @@ namespace OxfordOnline.Services
             {
                 // Criação segura da URI
                 var uri = new Uri($"ftp://{_ftpHost}/{remotePath}");
-
-                var request = (FtpWebRequest)WebRequest.Create(uri);
-                request.Method = WebRequestMethods.Ftp.DeleteFile;
-                request.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
-                request.UsePassive = true;
-                request.KeepAlive = false;
-
-                using var response = (FtpWebResponse)await request.GetResponseAsync();
-
-                if (response.StatusCode != FtpStatusCode.FileActionOK &&
-                    response.StatusCode != FtpStatusCode.CommandOK)
+                if (await FileExistsAsync(uri))
                 {
-                    throw new Exception($"Falha ao excluir o arquivo: {response.StatusDescription}");
+                    var request = (FtpWebRequest)WebRequest.Create(uri);
+                    request.Method = WebRequestMethods.Ftp.DeleteFile;
+                    request.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+                    request.UsePassive = true;
+                    request.KeepAlive = false;
+
+                    using var response = (FtpWebResponse)await request.GetResponseAsync();
+
+                    if (response.StatusCode != FtpStatusCode.FileActionOK &&
+                        response.StatusCode != FtpStatusCode.CommandOK)
+                    {
+                        throw new Exception($"Falha ao excluir o arquivo: {response.StatusDescription}");
+                    }
                 }
             }
             catch (WebException ex) when (ex.Response is FtpWebResponse ftpResponse)
@@ -73,6 +140,33 @@ namespace OxfordOnline.Services
             {
                 // erros gerais
                 throw new Exception($"Erro inesperado ao excluir arquivo '{remotePath}': {ex.Message}", ex);
+            }
+        }
+
+        private async Task<bool> FileExistsAsync(Uri uri)
+        {
+            try
+            {
+                var request = (FtpWebRequest)WebRequest.Create(uri);
+                request.Method = WebRequestMethods.Ftp.GetFileSize;
+                request.Credentials = new NetworkCredential(_ftpUser, _ftpPassword);
+                request.UsePassive = true;
+                request.KeepAlive = false;
+
+                using var response = (FtpWebResponse)await request.GetResponseAsync();
+                return true;
+            }
+            catch (WebException ex)
+            {
+                // Captura o erro específico para arquivo não encontrado.
+                if (ex.Response is FtpWebResponse ftpResponse &&
+                    (ftpResponse.StatusCode == FtpStatusCode.ActionNotTakenFileUnavailable ||
+                     ftpResponse.StatusCode == FtpStatusCode.ActionNotTakenFileUnavailableOrBusy))
+                {
+                    return false;
+                }
+                // Outros erros ainda devem ser lançados.
+                throw;
             }
         }
 

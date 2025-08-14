@@ -125,6 +125,48 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "OxfordOnline.Controllers.ImageController",
+    "Method": "ReplaceImagesBase64",
+    "RelativePath": "v1/Image/ReplaceProductImages/Base64",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "OxfordOnline.Models.Dto.ProductImageBase64",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ImageController",
+    "Method": "UpdateImages",
+    "RelativePath": "v1/Image/UpdateProductImages/{productId}/{finalidade}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "finalidade",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "files",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "OxfordOnline.Controllers.InventController",
     "Method": "GetInvents",
     "RelativePath": "v1/Invent",
@@ -566,6 +608,32 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "OxfordOnline.Controllers.ProductController",
+    "Method": "GetProductsSearch",
+    "RelativePath": "v1/Product/AppProduct/{product}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "product",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[OxfordOnline.Models.Dto.ProductComplete, OxfordOnline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "OxfordOnline.Controllers.ProductController",

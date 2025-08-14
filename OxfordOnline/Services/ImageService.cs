@@ -72,6 +72,12 @@ namespace OxfordOnline.Services
             await _imageRepository.UpdateImagesByProductIdAsync(productId, finalidade, files);
         }
 
+        // Na sua classe de serviço
+        public async Task UpdateImagesByteAsync(string productId, Finalidade finalidade, List<byte[]> imageBytesList)
+        {
+            // ... sua lógica de upload aqui, usando os bytes diretamente
+            await _imageRepository.UpdateImagesByteAsync(productId, finalidade, imageBytesList);
+        }
 
         // NOVO: Baixa imagem direto do FTP como stream
         public async Task<Stream> DownloadImageStreamAsync(string ftpFilePath)

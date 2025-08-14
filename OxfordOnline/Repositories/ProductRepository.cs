@@ -26,6 +26,97 @@ namespace OxfordOnline.Repositories
         public async Task<IEnumerable<Product>> GetAllAsync() =>
             await _context.Product.ToListAsync();
 
+        public async Task<IEnumerable<ProductComplete>> GetAppProductAsync(string? product)
+        {
+            if (string.IsNullOrWhiteSpace(product))
+            {
+                _logger.LogWarning("GetAppProductAsync chamado sem um ProductId. Retornando lista vazia.");
+                return Enumerable.Empty<ProductComplete>();
+            }
+
+            var productEntity = await _context.Product
+                .Where(p => p.Status == true && p.ProductId == product)
+                .FirstOrDefaultAsync();
+
+            if (productEntity == null)
+            {
+                _logger.LogInformation($"Produto com ID '{product}' não encontrado ou inativo.");
+                return Enumerable.Empty<ProductComplete>();
+            }
+
+            var productId = productEntity.ProductId;
+
+            var oxford = await _context.Oxford.FirstOrDefaultAsync(o => o.ProductId == productId);
+            var invent = await _context.Invent.FirstOrDefaultAsync(i => i.ProductId == productId);
+            var inventDim = await _context.InventDim.FirstOrDefaultAsync(id => id.ProductId == productId);
+            var taxInformation = await _context.TaxInformation.FirstOrDefaultAsync(ti => ti.ProductId == productId);
+            var tags = await _context.Tag.Where(t => t.ProductId == productId).ToListAsync();
+
+            var productComplete = new ProductComplete
+            {
+                Product = productEntity,
+                Oxford = oxford,
+                Invent = invent,
+                Location = inventDim,
+                TaxInformation = taxInformation,
+                Images = new List<ImageBase64>(),
+                Tags = tags
+            };
+
+            try
+            {
+                var images = await _imageRepository.GetByProductIdAsync(productId, Finalidade.TODOS, false);
+
+                if (images?.Any() == true)
+                {
+                    foreach (var img in images)
+                    {
+                        if (string.IsNullOrWhiteSpace(img.ImagePath))
+                            continue;
+
+                        var ftpRelativePath = img.ImagePath.TrimStart('/').Replace('\\', '/');
+                        var fileName = Path.GetFileName(ftpRelativePath);
+
+                        try
+                        {
+                            using var imageFileStream = await _imageRepository.DownloadFileStreamFromFtpAsync(ftpRelativePath);
+
+                            using var zipStream = new MemoryStream();
+                            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+                            {
+                                var entry = archive.CreateEntry(fileName, CompressionLevel.Fastest);
+                                using var entryStream = entry.Open();
+                                await imageFileStream.CopyToAsync(entryStream);
+                            }
+
+                            var zipBytes = zipStream.ToArray();
+                            var imageZipBase64 = Convert.ToBase64String(zipBytes);
+
+                            productComplete.Images.Add(new ImageBase64
+                            {
+                                ProductId = productId,
+                                ImagePath = img.ImagePath,
+                                Sequence = img.Sequence,
+                                ImageMain = img.ImageMain,
+                                Finalidade = img.Finalidade ?? "PRODUTO",
+                                ImagesBase64 = imageZipBase64
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, $"Erro ao processar imagem '{fileName}' do produto '{productId}'. FTP: {ftpRelativePath}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Erro geral ao processar imagens do produto '{productId}'.");
+            }
+
+            return new List<ProductComplete> { productComplete };
+        }
+
         public async Task<IEnumerable<Product>> GetSearchAsync(
             string? product,
             string? barcode,
@@ -81,8 +172,19 @@ namespace OxfordOnline.Repositories
             if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
                 query = query.Where(q => filterRequest.ProductId.Contains(q.p.ProductId));
 
-            // Nota: O filtro de Barcode foi removido, pois não está presente no AppProductFilterRequest fornecido.
-            // Se precisar dele, adicione-o ao AppProductFilterRequest.
+            // Filtra os ProductId que são códigos de barras (13 ou mais caracteres)
+            if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
+            {
+                var validProductIds = filterRequest.ProductId
+                    .Where(id => id.Length >= 13)
+                    .ToList();
+
+                if (validProductIds.Any())
+                {
+                    // Adiciona a verificação de nulidade: q.p.Barcode != null
+                    query = query.Where(q => q.p.Barcode != null && validProductIds.Contains(q.p.Barcode));
+                }
+            }
 
             if (filterRequest.FamilyId != null && filterRequest.FamilyId.Any())
                 query = query.Where(q => q.ox != null && filterRequest.FamilyId.Contains(q.ox.FamilyId));
@@ -401,11 +503,11 @@ namespace OxfordOnline.Repositories
                         };
 
             var baseData = await query
-                .GroupBy(x => x.Product.ProductId) // evitar repetições
-                .Select(g => g.First())            // pegar só um por produto
+                .GroupBy(x => x.Product.ProductId)
+                .Select(g => g.First())
                 .ToListAsync();
 
-            // Carrega imagens separadamente
+            // Carrega relacionamentos externos separadamente
             var productIds = baseData.Select(x => x.Product.ProductId).ToList();
 
             var imagesByProduct = await _context.Image
@@ -413,6 +515,12 @@ namespace OxfordOnline.Repositories
                 .OrderBy(img => img.Sequence)
                 .GroupBy(img => img.ProductId)
                 .ToDictionaryAsync(g => g.Key, g => g.Select(img => img.ImagePath).ToList());
+
+            // Busca as tags
+            var tagsByProduct = await _context.Tag
+                .Where(t => productIds.Contains(t.ProductId))
+                .GroupBy(t => t.ProductId)
+                .ToDictionaryAsync(g => g.Key, g => g.ToList());
 
             // Mapeia para DTO final
             var result = baseData.Select(q => new ProductOxfordDetails
@@ -427,10 +535,10 @@ namespace OxfordOnline.Repositories
                 ProductDescription = q.Oxford.BaseProductDescription ?? string.Empty,
 
                 Images = (imagesByProduct.ContainsKey(q.Product.ProductId)
-                            ? imagesByProduct[q.Product.ProductId]
-                            : new List<string>())
-                        .Select((img, index) => new { Index = index.ToString(), img })
-                        .ToDictionary(x => x.Index, x => x.img),
+                                    ? imagesByProduct[q.Product.ProductId]
+                                    : new List<string>())
+                                .Select((img, index) => new { Index = index.ToString(), img })
+                                .ToDictionary(x => x.Index, x => x.img),
 
                 Invent = new ProductInvent
                 {
@@ -444,7 +552,9 @@ namespace OxfordOnline.Repositories
                     UnitVolumeML = q.Invent?.UnitVolumeML ?? 0,
                     NrOfItems = q.Invent?.NrOfItems ?? 0,
                     UnitId = q.Invent?.UnitId ?? string.Empty
-                }
+                },
+                Tags = tagsByProduct.GetValueOrDefault(q.Product.ProductId)
+
             }).ToList();
 
             return result;

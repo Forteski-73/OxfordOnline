@@ -16,6 +16,9 @@ namespace OxfordOnline.Repositories.Interfaces
         Task AddOrUpdateAsync(Image image);
 
         Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files);
+
+        Task UpdateImagesByteAsync(string productId, Finalidade finalidade, List<byte[]> imageBytesList);
+
         //Task DeleteImagesByProductIdAsync(string productId);
         //Task SaveImageAsync(string productId, string fileName, Stream content);
         Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath);

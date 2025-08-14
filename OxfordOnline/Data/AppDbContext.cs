@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OxfordOnline.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using OxfordOnline.Models;
+using OxfordOnline.Models.Dto;
 
 namespace OxfordOnline.Data
 {
@@ -30,7 +31,7 @@ namespace OxfordOnline.Data
 
         public DbSet<TaxInformation> TaxInformation { get; set; }
 
-        //public DbSet<Tag> Tag { get; set; }
+        public DbSet<Tag> Tag { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

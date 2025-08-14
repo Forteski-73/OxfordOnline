@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OxfordOnline.Models;
+using OxfordOnline.Models.Dto;
 using OxfordOnline.Models.Enums;
 using OxfordOnline.Resources;
 using OxfordOnline.Services;
@@ -10,6 +11,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Text.Json;
+using System.IO.Compression;
 
 namespace OxfordOnline.Controllers
 {
@@ -158,6 +160,135 @@ namespace OxfordOnline.Controllers
             {
                 _logger.LogError(ex, "*** Erro ao substituir imagens ***");
                 return StatusCode(500, "Erro ao salvar novas imagens.");
+            }
+        }
+
+        [HttpPost("UpdateProductImages/{productId}/{finalidade}")]
+        public async Task<IActionResult> UpdateImages(string productId, Finalidade finalidade, [FromForm] List<IFormFile> files)
+        {
+            _logger.LogError("       ********************* Chegou no UpdateProductImages *********************");
+            if (string.IsNullOrWhiteSpace(productId))
+                return BadRequest("Produto inválido.");
+            _logger.LogError("       ********************* Chegou no UpdateProductImages 1 *********************");
+            if (files == null || !files.Any())
+                return BadRequest("Nenhuma imagem enviada.");
+
+            _logger.LogError("       ********************* Chegou no UpdateProductImages 2 *********************");
+            try
+            {
+                await _imageService.UpdateImagesByProductIdAsync(productId, finalidade, files);
+
+                _logger.LogError("       ********************* Chegou no UpdateProductImages  Imagens substituídas com sucesso. *********************");
+                return Ok("Imagens substituídas com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "*** Erro ao substituir imagens ***");
+                return StatusCode(500, "Erro ao salvar novas imagens..");
+            }
+        }
+
+        /*
+
+        [HttpPost("ReplaceProductImages/Base64")]
+        public async Task<IActionResult> ReplaceImagesBase64([FromBody] ProductImageBase64 request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.ProductId))
+            {
+                return BadRequest("Dados de requisição inválidos.");
+            }
+
+            if (request.Base64Images == null || !request.Base64Images.Any())
+            {
+                return BadRequest("Nenhuma imagem em base64 enviada.");
+            }
+
+            try
+            {
+                var imageBytesList = new List<byte[]>();
+                foreach (var base64Image in request.Base64Images)
+                {
+                    // Converte cada string Base64 diretamente para byte[]
+                    byte[] imageBytes = Convert.FromBase64String(base64Image);
+                    imageBytesList.Add(imageBytes);
+                }
+
+                // Chama o serviço com a nova lista
+                await _imageService.UpdateImagesByteAsync(request.ProductId, request.Finalidade, imageBytesList);
+
+                return Ok("Imagens substituídas com sucesso via Base64.");
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Uma ou mais strings de imagem não estão em um formato Base64 válido.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "*** Erro ao substituir imagens Base64 ***");
+                return StatusCode(500, "Erro ao salvar novas imagens...");
+            }
+        }
+        */
+
+        [HttpPost("ReplaceProductImages/Base64")]
+        public async Task<IActionResult> ReplaceImagesBase64([FromBody] ProductImageBase64 request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.ProductId))
+            {
+                return BadRequest("Dados de requisição inválidos.");
+            }
+
+            if (request.Base64Images == null || !request.Base64Images.Any())
+            {
+                return BadRequest("Nenhuma imagem em base64 enviada.");
+            }
+
+            try
+            {
+                var imageBytesList = new List<byte[]>();
+                foreach (var base64Image in request.Base64Images)
+                {
+                    // Converte a string Base64 para um array de bytes
+                    byte[] zippedBytes = Convert.FromBase64String(base64Image);
+
+                    // Descompacta os bytes para obter o conteúdo original da imagem
+                    using (var zippedStream = new MemoryStream(zippedBytes))
+                    using (var archive = new ZipArchive(zippedStream, ZipArchiveMode.Read))
+                    {
+                        // Acha a primeira entrada (o arquivo de imagem) dentro do ZIP
+                        var entry = archive.Entries.FirstOrDefault();
+                        if (entry == null)
+                        {
+                            return BadRequest("O arquivo compactado não contém uma imagem válida.");
+                        }
+
+                        // Lê o conteúdo da imagem descompactada para um array de bytes
+                        using (var entryStream = entry.Open())
+                        using (var unzippedStream = new MemoryStream())
+                        {
+                            await entryStream.CopyToAsync(unzippedStream);
+                            imageBytesList.Add(unzippedStream.ToArray());
+                        }
+                    }
+                }
+
+                // Chama o serviço com a nova lista de bytes das imagens descompactadas
+                await _imageService.UpdateImagesByteAsync(request.ProductId, request.Finalidade, imageBytesList);
+
+                return Ok("Imagens substituídas com sucesso via Base64.");
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Uma ou mais strings de imagem não estão em um formato Base64 válido.");
+            }
+            catch (InvalidDataException) // Captura exceção específica de dados de ZIP inválidos
+            {
+                return BadRequest("O conteúdo Base64 não é um arquivo ZIP válido.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "*** Erro ao substituir imagens Base64 ***");
+                return StatusCode(500, "Erro ao salvar novas imagens...");
             }
         }
     }

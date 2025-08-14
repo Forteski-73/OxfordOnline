@@ -14,5 +14,6 @@
         public Dictionary<string, string> Images { get; set; } = new();
 
         public ProductInvent Invent { get; set; } = new();
+        public List<Tag>? Tags { get; set; }
     }
 }

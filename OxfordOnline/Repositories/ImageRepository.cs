@@ -97,8 +97,188 @@ namespace OxfordOnline.Repositories
                 _context.Image.Update(existing);
             }
         }
+        public async Task UpdateImagesByteAsync(string productId, Finalidade finalidade, List<byte[]> imageBytesList)
+        {
+            _logger.LogError("**** INICIO UpdateImagesByteAsync ****");
+            try
+            {
+                var images = await _context.Image.Where(i => i.ProductId == productId && i.Finalidade == finalidade.ToString()).ToListAsync();
+
+                string directoryPath;
+
+                if (images.Any())
+                {
+                    // Pega o diretório da primeira imagem existente para usar como base
+                    directoryPath = Path.GetDirectoryName(images.First().ImagePath)?.Replace("\\", "/") ?? string.Empty;
+
+                    // Deleta as imagens antigas do FTP e do contexto
+                    foreach (var image in images)
+                    {
+                        if (!string.IsNullOrEmpty(image.ImagePath))
+                        {
+                            await _ftpService.DeleteAsync(image.ImagePath);
+                        }
+                        _context.Image.Remove(image);
+                    }
+                }
+                else
+                {
+                    // Se não houver imagens, cria um novo diretório no FTP
+                    var oxford = await _context.Oxford.FirstOrDefaultAsync(o => o.ProductId == productId);
+                    if (oxford == null)
+                    {
+                        _logger.LogError($"**** Produto não encontrado: {productId} ****");
+                        throw new KeyNotFoundException($"Produto não encontrado: {productId}");
+                    }
+
+                    var pathBuilder = new FtpImagePathBuilder(
+                        oxford.FamilyDescription.Replace(" ", "_"),
+                        oxford.BrandDescription.Replace(" ", "_"),
+                        oxford.LineDescription.Replace(" ", "_"),
+                        oxford.DecorationDescription.Replace(" ", "_"),
+                        oxford.ProductId,
+                        finalidade.ToString()
+                    );
+
+                    // Garante que o diretório existe
+                    await _ftpService.EnsureDirectoryExistsAsync(pathBuilder);
+                    directoryPath = pathBuilder.ToString();
+                }
+
+                if (string.IsNullOrEmpty(directoryPath))
+                {
+                    throw new InvalidOperationException("Não foi possível determinar o diretório de destino.");
+                }
+
+                int seqImg = 1;
+                bool mainImg = true;
+                foreach (var imageBytes in imageBytesList) // Mudei de 'files' para 'imageBytesList'
+                {
+                    var formattedSequence = seqImg.ToString("D4");
+                    var fileName = $"{formattedSequence}.jpeg";
+
+                    using var stream = new MemoryStream(imageBytes);
+
+                    var ftpPath = $"{directoryPath}/{fileName}";
+
+                    _logger.LogError($"**** IMAGEM: {ftpPath} ****");
+                    await _ftpService.UploadAsync(ftpPath, stream);
+
+                    var imageNew = new Image
+                    {
+                        ProductId = productId,
+                        ImagePath = ftpPath,
+                        Finalidade = finalidade.ToString(),
+                        Sequence = seqImg,
+                        ImageMain = mainImg
+                    };
+                    _context.Image.Add(imageNew);
+
+                    mainImg = false;
+                    seqImg++;
+                }
+
+                await _context.SaveChangesAsync();
+                _logger.LogError("**** IMAGENS ATUALIZADAS E SALVAS NO BANCO DE DADOS ****");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"**** Erro ao atualizar imagens para o produto: {productId} ****");
+                throw;
+            }
+        }
 
         public async Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files)
+        {
+            _logger.LogError("**** INICIO UpdateImagesByProductIdAsync ****");
+            try
+            {
+                var images = await _context.Image.Where(i => i.ProductId == productId && i.Finalidade == finalidade.ToString()).ToListAsync();
+
+                string directoryPath;
+
+                if (images.Any())
+                {
+                    // Pega o diretório da primeira imagem existente para usar como base
+                    directoryPath = Path.GetDirectoryName(images.First().ImagePath)?.Replace("\\", "/") ?? string.Empty;
+
+                    // Deleta as imagens antigas do FTP e do contexto
+                    foreach (var image in images)
+                    {
+                        if (!string.IsNullOrEmpty(image.ImagePath))
+                        {
+                            await _ftpService.DeleteAsync(image.ImagePath);
+                        }
+                        _context.Image.Remove(image);
+                    }
+                }
+                else
+                {
+                    // Se não houver imagens, cria um novo diretório no FTP
+                    var oxford = await _context.Oxford.FirstOrDefaultAsync(o => o.ProductId == productId);
+                    if (oxford == null)
+                    {
+                        _logger.LogError($"**** Produto não encontrado: {productId} ****");
+                        throw new KeyNotFoundException($"Produto não encontrado: {productId}");
+                    }
+
+                    var pathBuilder = new FtpImagePathBuilder(
+                        oxford.FamilyDescription.Replace(" ", "_"),
+                        oxford.BrandDescription.Replace(" ", "_"),
+                        oxford.LineDescription.Replace(" ", "_"),
+                        oxford.DecorationDescription.Replace(" ", "_"),
+                        oxford.ProductId,
+                        finalidade.ToString()
+                    );
+
+                    // Garante que o diretório existe
+                    await _ftpService.EnsureDirectoryExistsAsync(pathBuilder);
+                    directoryPath = pathBuilder.ToString();
+                }
+
+                if (string.IsNullOrEmpty(directoryPath))
+                {
+                    throw new InvalidOperationException("Não foi possível determinar o diretório de destino.");
+                }
+
+                int seqImg = 1;
+                bool mainImg = true;
+                foreach (var file in files)
+                {
+                    if (file.Length == 0) continue;
+
+                    using var stream = file.OpenReadStream();
+
+                    var ftpPath = $"{directoryPath}/{file.FileName}";
+
+                    _logger.LogError($"**** IMAGEM: {ftpPath} ****");
+                    await _ftpService.UploadAsync(ftpPath, stream);
+
+                    var imageNew = new Image
+                    {
+                        ProductId = productId,
+                        ImagePath = ftpPath,
+                        Finalidade = finalidade.ToString(),
+                        Sequence = seqImg,
+                        ImageMain = mainImg
+                    };
+                    _context.Image.Add(imageNew);
+
+                    mainImg = false;
+                    seqImg++;
+                }
+
+                await _context.SaveChangesAsync();
+                _logger.LogError("**** IMAGENS ATUALIZADAS E SALVAS NO BANCO DE DADOS ****");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"**** Erro ao atualizar imagens para o produto: {productId} ****");
+                throw;
+            }
+        }
+
+        /*public async Task UpdateImagesByProductIdAsync(string productId, Finalidade finalidade, List<IFormFile> files)
         {
             _logger.LogError("**** INICIO  UpdateImagesByProductIdAsync ****");
             try
@@ -199,6 +379,7 @@ namespace OxfordOnline.Repositories
                 throw;
             }
         }
+        */
 
         public async Task<Stream> DownloadFileStreamFromFtpAsync(string ftpFilePath)
         {

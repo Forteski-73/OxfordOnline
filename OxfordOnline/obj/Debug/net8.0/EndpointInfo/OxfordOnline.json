@@ -233,6 +233,90 @@
         }
       }
     },
+    "/v1/Image/UpdateProductImages/{productId}/{finalidade}": {
+      "post": {
+        "tags": [
+          "Image"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "finalidade",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Finalidade"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "files": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/v1/Image/ReplaceProductImages/Base64": {
+      "post": {
+        "tags": [
+          "Image"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductImageBase64"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductImageBase64"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductImageBase64"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/v1/Invent": {
       "get": {
         "tags": [
@@ -1056,6 +1140,54 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ProductApp"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/Product/AppProduct/{product}": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "product",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductComplete"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductComplete"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductComplete"
                   }
                 }
               }
@@ -1897,6 +2029,35 @@
         },
         "additionalProperties": false
       },
+      "ImageBase64": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imageMain": {
+            "type": "boolean"
+          },
+          "finalidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagesBase64": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Invent": {
         "required": [
           "productId"
@@ -2245,6 +2406,41 @@
         },
         "additionalProperties": false
       },
+      "ProductComplete": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          },
+          "oxford": {
+            "$ref": "#/components/schemas/Oxford"
+          },
+          "invent": {
+            "$ref": "#/components/schemas/Invent"
+          },
+          "location": {
+            "$ref": "#/components/schemas/InventDim"
+          },
+          "taxInformation": {
+            "$ref": "#/components/schemas/TaxInformation"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageBase64"
+            },
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ProductData": {
         "type": "object",
         "properties": {
@@ -2285,6 +2481,26 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Image"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProductImageBase64": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "nullable": true
+          },
+          "finalidade": {
+            "$ref": "#/components/schemas/Finalidade"
+          },
+          "base64Images": {
+            "type": "array",
+            "items": {
+              "type": "string"
             },
             "nullable": true
           }
@@ -2422,6 +2638,13 @@
           },
           "invent": {
             "$ref": "#/components/schemas/ProductInvent"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2505,6 +2728,30 @@
               "type": "string"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Tag": {
+        "required": [
+          "productId",
+          "valueTag"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "valueTag": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "productId": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "additionalProperties": false
