@@ -170,6 +170,184 @@ namespace OxfordOnline.Repositories
 
             // Aplica os filtros baseados no AppProductFilterRequest
             if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
+            {
+                var validProductIds = filterRequest.ProductId
+                    .Where(id => id.Length >= 13)
+                    .ToList();
+
+                if (validProductIds.Any())
+                {
+                    query = query.Where(q => q.p.Barcode != null && validProductIds.Contains(q.p.Barcode));
+                }
+            }
+            
+            if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
+            {
+                query = query.Where(q => filterRequest.ProductId.Contains(q.p.ProductId));
+            }
+
+
+            if (filterRequest.FamilyId != null && filterRequest.FamilyId.Any())
+            {
+                query = query.Where(q =>
+                    q.ox != null && (
+                        filterRequest.FamilyId.Contains(q.ox.FamilyId) ||
+                        filterRequest.FamilyId.Contains(q.ox.FamilyDescription ?? string.Empty))
+                );
+            }
+
+            if (filterRequest.BrandId != null && filterRequest.BrandId.Any())
+            {
+                query = query.Where(q =>
+                    q.ox != null && (
+                        filterRequest.BrandId.Contains(q.ox.BrandId) ||
+                        filterRequest.BrandId.Contains(q.ox.BrandDescription ?? string.Empty))
+                );
+            }
+
+            if (filterRequest.LineId != null && filterRequest.LineId.Any())
+            {
+                query = query.Where(q =>
+                    q.ox != null && (
+                        filterRequest.LineId.Contains(q.ox.LineId) ||
+                        filterRequest.LineId.Contains(q.ox.LineDescription ?? string.Empty))
+                );
+            }
+            /*
+            if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
+            {
+                query = query.Where(q =>
+                    q.ox != null && (
+                        filterRequest.DecorationId.Contains(q.ox.DecorationId) ||
+                        filterRequest.DecorationId.Contains(q.ox.DecorationDescription ?? string.Empty))
+                );
+            }*/
+            if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
+            {
+                // Como filterRequest.DecorationId conterá apenas um item, podemos pegá-lo diretamente.
+                var singleFilterId = filterRequest.DecorationId.FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(singleFilterId))
+                {
+                    // Ajustado para usar ToLower().Contains() para simular LIKE case-insensitive
+                    // no banco de dados, evitando o erro de tradução do StringComparison.OrdinalIgnoreCase.
+                    query = query.Where(q =>
+                        q.ox != null &&
+                        (
+                            // Verifica se DecorationDescription contém o filtro (case-insensitive)
+                            (q.ox.DecorationDescription != null && q.ox.DecorationDescription.ToLower().Contains(singleFilterId.ToLower())) ||
+                            // Verifica se DecorationId contém o filtro (case-insensitive)
+                            (q.ox.DecorationId != null && q.ox.DecorationId.ToLower().Contains(singleFilterId.ToLower()))
+                        )
+                    );
+                }
+            }
+
+            if (filterRequest.Tag != null && filterRequest.Tag.Any())
+            {
+                // Filtra os produtos que possuem alguma tag na lista do filtro.
+                query = query.Where(q =>
+                    _context.Tag.Any(t =>
+                        t.ProductId == q.p.ProductId && // Verifica se a tag pertence ao produto
+                        filterRequest.Tag.Contains(t.ValueTag ?? string.Empty) // E se a tag corresponde ao filtro
+                    )
+                );
+            }
+
+            // Trata o filtro de Nome como um texto único
+            if (!string.IsNullOrWhiteSpace(filterRequest.Name))
+            {
+                query = query.Where(q => q.p.ProductName != null && q.p.ProductName.Contains(filterRequest.Name));
+            }
+
+            // Primeiro, executamos a consulta para buscar os produtos do banco de dados
+            var productsFromDb = await query
+                .OrderBy(q => q.p.ProductId)
+                .Take(20) // pega os primeiros 20 produtos
+                .Select(q => q.p)
+                .ToListAsync();
+
+            // Em seguida, criamos a lista que será retornada
+            var productAppList = new List<ProductApp>();
+
+            // Iteramos sobre cada produto para buscar e processar as imagens
+            foreach (var p in productsFromDb)
+            {
+                var productId = p.ProductId;
+
+                // Cria o objeto DTO
+                var productApp = new ProductApp
+                {
+                    ProductId = p.ProductId,
+                    Barcode = p.Barcode,
+                    Name = p.ProductName
+                };
+
+                try
+                {
+                    // Recupera as imagens do produto
+                    var images = await _imageRepository.GetByProductIdAsync(productId, Finalidade.PRODUTO, true);
+
+                    // Verifica se há imagens e, se sim, cria o zip em Base64
+                    if (images != null && images.Any())
+                    {
+                        using (var zipStream = new MemoryStream())
+                        {
+                            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+                            {
+                                foreach (var img in images)
+                                {
+                                    if (string.IsNullOrWhiteSpace(img.ImagePath))
+                                        continue;
+
+                                    var ftpRelativePath = img.ImagePath.TrimStart('/').Replace('\\', '/');
+                                    var fileName = Path.GetFileName(ftpRelativePath);
+
+                                    try
+                                    {
+                                        var stream = await _imageRepository.DownloadFileStreamFromFtpAsync(ftpRelativePath);
+                                        var entry = archive.CreateEntry(fileName, CompressionLevel.Fastest);
+
+                                        using (var entryStream = entry.Open())
+                                        {
+                                            await stream.CopyToAsync(entryStream);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, $"*** Erro ao adicionar imagem {fileName} no zip para o produto {productId} ***");
+                                    }
+                                }
+                            }
+
+                            // Converte o MemoryStream do zip para array de bytes e depois para Base64
+                            var zipBytes = zipStream.ToArray();
+                            productApp.ImageZipBase64 = Convert.ToBase64String(zipBytes);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"*** Erro ao processar imagens para o produto {productId} ***");
+                }
+
+                productAppList.Add(productApp);
+            }
+
+            return productAppList;
+        }
+
+        /*
+        public async Task<IEnumerable<ProductApp>> GetAppSearchAsync(AppProductFilterRequest filterRequest)
+        {
+            var query = from p in _context.Product
+                        join o in _context.Oxford on p.ProductId equals o.ProductId into oxJoin
+                        from ox in oxJoin.DefaultIfEmpty()
+                        where p.Status == true
+                        select new { p, ox };
+
+            // Aplica os filtros baseados no AppProductFilterRequest
+            if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
                 query = query.Where(q => filterRequest.ProductId.Contains(q.p.ProductId));
 
             // Filtra os ProductId que são códigos de barras (13 ou mais caracteres)
@@ -281,6 +459,8 @@ namespace OxfordOnline.Repositories
 
             return productAppList;
         }
+
+        */
 
         public async Task<Product?> GetByProductIdAsync(string productId) =>
             await _context.Product.FirstOrDefaultAsync(p => p.ProductId == productId);

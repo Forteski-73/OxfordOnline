@@ -1,13 +1,15 @@
-﻿using OxfordOnline.Data;
-using OxfordOnline.Models;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OxfordOnline.Data;
+using OxfordOnline.Models;
 
 namespace OxfordOnline.Controllers
 {
-    /*
+
     [ApiController]
-    [Route("[controller]")]
+    [ApiVersion("1.0")]
+    [Route("v{version:apiVersion}/[controller]")]
     public class TagController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,6 +20,7 @@ namespace OxfordOnline.Controllers
         }
 
         // POST: Criar múltiplas tags
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateTags([FromBody] List<Tag> tags)
         {
@@ -26,7 +29,7 @@ namespace OxfordOnline.Controllers
 
             // Validação: ProductId e Tag devem estar preenchidos
             if (tags.Any(tag => string.IsNullOrWhiteSpace(tag.ProductId) || string.IsNullOrWhiteSpace(tag.ValueTag)))
-                return BadRequest("Todas as tags devem ter um ProductId e uma tag (Value) válidos.");
+                return BadRequest("Todas as tags devem ter um ProductId e uma tag válidos.");
 
             // Verifica se todos os ProductIds existem
             var productIds = tags.Select(t => t.ProductId).Distinct();
@@ -38,12 +41,6 @@ namespace OxfordOnline.Controllers
             var invalidProductIds = productIds.Except(existingProductIds).ToList();
             if (invalidProductIds.Any())
                 return NotFound($"Produtos não encontrados: {string.Join(", ", invalidProductIds)}");
-
-            // Remove relação para evitar problemas de tracking
-            foreach (var tag in tags)
-            {
-                tag.Product = null;
-            }
 
             try
             {
@@ -79,6 +76,7 @@ namespace OxfordOnline.Controllers
         }
 
         // GET: Todas as tags
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Tag>>> GetAllTags()
         {
@@ -98,6 +96,7 @@ namespace OxfordOnline.Controllers
         }
 
         // GET: Tags por ProductId
+        [Authorize]
         [HttpGet("Product/{productId}")]
         public async Task<ActionResult<IEnumerable<Tag>>> GetTagsByProductId(string productId)
         {
@@ -110,5 +109,5 @@ namespace OxfordOnline.Controllers
 
             return Ok(tags);
         }
-    }*/
+    }
 }
