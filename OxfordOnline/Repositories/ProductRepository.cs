@@ -160,7 +160,7 @@ namespace OxfordOnline.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<ProductApp>> GetAppSearchAsync(AppProductFilterRequest filterRequest)
+        public async Task<ProductSearchResponse> GetAppSearchAsync(AppProductFilterRequest filterRequest)
         {
             var query = from p in _context.Product
                         join o in _context.Oxford on p.ProductId equals o.ProductId into oxJoin
@@ -213,15 +213,6 @@ namespace OxfordOnline.Repositories
                         filterRequest.LineId.Contains(q.ox.LineDescription ?? string.Empty))
                 );
             }
-            /*
-            if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
-            {
-                query = query.Where(q =>
-                    q.ox != null && (
-                        filterRequest.DecorationId.Contains(q.ox.DecorationId) ||
-                        filterRequest.DecorationId.Contains(q.ox.DecorationDescription ?? string.Empty))
-                );
-            }*/
             if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
             {
                 // Como filterRequest.DecorationId conterá apenas um item, podemos pegá-lo diretamente.
@@ -236,7 +227,6 @@ namespace OxfordOnline.Repositories
                         (
                             // Verifica se DecorationDescription contém o filtro (case-insensitive)
                             (q.ox.DecorationDescription != null && q.ox.DecorationDescription.ToLower().Contains(singleFilterId.ToLower())) ||
-                            // Verifica se DecorationId contém o filtro (case-insensitive)
                             (q.ox.DecorationId != null && q.ox.DecorationId.ToLower().Contains(singleFilterId.ToLower()))
                         )
                     );
@@ -257,134 +247,54 @@ namespace OxfordOnline.Repositories
             // Trata o filtro de Nome como um texto único
             if (!string.IsNullOrWhiteSpace(filterRequest.Name))
             {
-                query = query.Where(q => q.p.ProductName != null && q.p.ProductName.Contains(filterRequest.Name));
+                //query = query.Where(q => q.p.ProductName != null && q.p.ProductName.Contains(filterRequest.Name));
+                query = query.Where(q => q.p.ProductName != null && q.p.ProductName.ToLower().Contains(filterRequest.Name.ToLower()));
+            }
+   
+            if (filterRequest.YesNoImage != null)
+            {
+                // Se o filtro for "Sim", busca produtos com imagens principais
+                if (filterRequest.YesNoImage.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(q =>
+                        _context.Image.Any(i =>
+                            i.ProductId == q.p.ProductId &&
+                            i.ImageMain &&
+                            i.Finalidade == Finalidade.PRODUTO.ToString()
+                        )
+                    );
+                }
+                // Se o filtro for "Não", busca produtos sem imagens principais
+                else if (filterRequest.YesNoImage.Equals("no", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(q =>
+                        !_context.Image.Any(i =>
+                            i.ProductId == q.p.ProductId &&
+                            i.ImageMain &&
+                            i.Finalidade == Finalidade.PRODUTO.ToString()
+                        )
+                    );
+                }
             }
 
-            // Primeiro, executamos a consulta para buscar os produtos do banco de dados
-            var productsFromDb = await query
+            // 1 - Conta o total de produtos que atendem aos critérios de filtro
+            var totalCount = await query.CountAsync();
+
+            // 2 - Executa a consulta para buscar os primeiros 20 produtos
+            /*var productsFromDb = await query
                 .OrderBy(q => q.p.ProductId)
-                .Take(20) // pega os primeiros 20 produtos
+                .Take(20)
                 .Select(q => q.p)
                 .ToListAsync();
+            */
 
-            // Em seguida, criamos a lista que será retornada
-            var productAppList = new List<ProductApp>();
-
-            // Iteramos sobre cada produto para buscar e processar as imagens
-            foreach (var p in productsFromDb)
-            {
-                var productId = p.ProductId;
-
-                // Cria o objeto DTO
-                var productApp = new ProductApp
-                {
-                    ProductId = p.ProductId,
-                    Barcode = p.Barcode,
-                    Name = p.ProductName
-                };
-
-                try
-                {
-                    // Recupera as imagens do produto
-                    var images = await _imageRepository.GetByProductIdAsync(productId, Finalidade.PRODUTO, true);
-
-                    // Verifica se há imagens e, se sim, cria o zip em Base64
-                    if (images != null && images.Any())
-                    {
-                        using (var zipStream = new MemoryStream())
-                        {
-                            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
-                            {
-                                foreach (var img in images)
-                                {
-                                    if (string.IsNullOrWhiteSpace(img.ImagePath))
-                                        continue;
-
-                                    var ftpRelativePath = img.ImagePath.TrimStart('/').Replace('\\', '/');
-                                    var fileName = Path.GetFileName(ftpRelativePath);
-
-                                    try
-                                    {
-                                        var stream = await _imageRepository.DownloadFileStreamFromFtpAsync(ftpRelativePath);
-                                        var entry = archive.CreateEntry(fileName, CompressionLevel.Fastest);
-
-                                        using (var entryStream = entry.Open())
-                                        {
-                                            await stream.CopyToAsync(entryStream);
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogWarning(ex, $"*** Erro ao adicionar imagem {fileName} no zip para o produto {productId} ***");
-                                    }
-                                }
-                            }
-
-                            // Converte o MemoryStream do zip para array de bytes e depois para Base64
-                            var zipBytes = zipStream.ToArray();
-                            productApp.ImageZipBase64 = Convert.ToBase64String(zipBytes);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"*** Erro ao processar imagens para o produto {productId} ***");
-                }
-
-                productAppList.Add(productApp);
-            }
-
-            return productAppList;
-        }
-
-        /*
-        public async Task<IEnumerable<ProductApp>> GetAppSearchAsync(AppProductFilterRequest filterRequest)
-        {
-            var query = from p in _context.Product
-                        join o in _context.Oxford on p.ProductId equals o.ProductId into oxJoin
-                        from ox in oxJoin.DefaultIfEmpty()
-                        where p.Status == true
-                        select new { p, ox };
-
-            // Aplica os filtros baseados no AppProductFilterRequest
-            if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
-                query = query.Where(q => filterRequest.ProductId.Contains(q.p.ProductId));
-
-            // Filtra os ProductId que são códigos de barras (13 ou mais caracteres)
-            if (filterRequest.ProductId != null && filterRequest.ProductId.Any())
-            {
-                var validProductIds = filterRequest.ProductId
-                    .Where(id => id.Length >= 13)
-                    .ToList();
-
-                if (validProductIds.Any())
-                {
-                    // Adiciona a verificação de nulidade: q.p.Barcode != null
-                    query = query.Where(q => q.p.Barcode != null && validProductIds.Contains(q.p.Barcode));
-                }
-            }
-
-            if (filterRequest.FamilyId != null && filterRequest.FamilyId.Any())
-                query = query.Where(q => q.ox != null && filterRequest.FamilyId.Contains(q.ox.FamilyId));
-
-            if (filterRequest.BrandId != null && filterRequest.BrandId.Any())
-                query = query.Where(q => q.ox != null && filterRequest.BrandId.Contains(q.ox.BrandId));
-
-            if (filterRequest.LineId != null && filterRequest.LineId.Any())
-                query = query.Where(q => q.ox != null && filterRequest.LineId.Contains(q.ox.LineId));
-
-            if (filterRequest.DecorationId != null && filterRequest.DecorationId.Any())
-                query = query.Where(q => q.ox != null && filterRequest.DecorationId.Contains(q.ox.DecorationId));
-
-            // Trata o filtro de Nome como um texto único
-            if (!string.IsNullOrWhiteSpace(filterRequest.Name))
-            {
-                query = query.Where(q => q.p.ProductName != null && q.p.ProductName.Contains(filterRequest.Name));
-            }
-
-            // Primeiro, executamos a consulta para buscar os produtos do banco de dados
             var productsFromDb = await query
-                .OrderBy(q => q.p.ProductId)
+                .OrderByDescending(q => _context.Image.Any(i =>
+                    i.ProductId == q.p.ProductId &&
+                    i.ImageMain &&
+                    i.Finalidade == Finalidade.PRODUTO.ToString()
+                ))
+                .ThenBy(q => q.p.ProductId) // Ordenação secundária para garantir uma ordem consistente
                 .Take(20)
                 .Select(q => q.p)
                 .ToListAsync();
@@ -451,16 +361,18 @@ namespace OxfordOnline.Repositories
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"*** Erro ao processar imagens para o produto {productId} ***");
-                    // Se ocorrer um erro, ImageZipBase64 ficará nulo ou string vazia, o que é aceitável.
                 }
 
                 productAppList.Add(productApp);
             }
 
-            return productAppList;
+            // Retorna o novo objeto com a contagem total e a lista de produtos
+            return new ProductSearchResponse
+            {
+                TotalProducts = totalCount,
+                Products = productAppList
+            };
         }
-
-        */
 
         public async Task<Product?> GetByProductIdAsync(string productId) =>
             await _context.Product.FirstOrDefaultAsync(p => p.ProductId == productId);

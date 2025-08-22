@@ -9,5 +9,6 @@
         public List<string>? FamilyId { get; set; }
         public List<string>? DecorationId { get; set; }
         public List<string>? Tag { get; set; }
+        public string? YesNoImage { get; set; }
     }
 }

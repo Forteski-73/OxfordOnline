@@ -41,7 +41,7 @@ namespace OxfordOnline.Services
         public async Task<IEnumerable<ProductComplete>> GetAppProductAsync(string? product) =>
             await _repo.GetAppProductAsync(product);
         
-        public async Task<IEnumerable<ProductApp>> GetAppSearchAsyncAsync(AppProductFilterRequest filterRequest) =>
+        public async Task<ProductSearchResponse> GetAppSearchAsyncAsync(AppProductFilterRequest filterRequest) =>
             await _repo.GetAppSearchAsync(filterRequest);
 
         public async Task<Product?> GetProductByIdAsync(String productId) =>

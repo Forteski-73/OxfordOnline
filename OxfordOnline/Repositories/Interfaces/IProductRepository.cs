@@ -13,7 +13,7 @@ namespace OxfordOnline.Repositories.Interfaces
         Task<IEnumerable<Product>> GetAllAsync();
         Task<IEnumerable<Product>> GetSearchAsync(string? product, string? barcode, string? family, string? brand, string? line, string? decoration, string? nome);
         Task<IEnumerable<ProductComplete>> GetAppProductAsync(string? product);
-        Task<IEnumerable<ProductApp>> GetAppSearchAsync(AppProductFilterRequest filterRequest);
+        Task<ProductSearchResponse> GetAppSearchAsync(AppProductFilterRequest filterRequest);
         Task<Product?> GetFirstAsync();
         Task AddAsync(Product product);
         Task UpdateAsync(Product product);
